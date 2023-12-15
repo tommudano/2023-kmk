@@ -34,7 +34,7 @@ class Specialty:
         if Specialty.exists_with_name(name):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Specialty already exists",
+                detail="La especialidad ya existe",
             )
         db.collection("specialties").document().set({"name": name.lower()})
 

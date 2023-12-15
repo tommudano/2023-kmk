@@ -20,8 +20,8 @@ const Header = (props) => {
                 pauseOnHover={true}
             />
             <Image
-                src="/logo.png"
-                alt="Logo de la empresa"
+                src='/logo.png'
+                alt='Logo de la empresa'
                 className={styles.logo}
                 width={200}
                 height={200}
@@ -30,8 +30,8 @@ const Header = (props) => {
                 }}
             />
             <Image
-                src="/logout_icon.png"
-                alt="CerrarSesion"
+                src='/logout_icon.png'
+                alt='CerrarSesion'
                 className={styles["logout-icon"]}
                 width={200}
                 height={200}
@@ -44,8 +44,8 @@ const Header = (props) => {
                 }}
             />
             <Image
-                src="/user_icon.png"
-                alt="Usuario"
+                src='/user_icon.png'
+                alt='Usuario'
                 className={styles["user-icon"]}
                 width={200}
                 height={200}
@@ -70,8 +70,8 @@ const HeaderSlim = () => {
                 pauseOnHover={true}
             />
             <Image
-                src="/logo.png"
-                alt="Logo de la empresa"
+                src='/logo.png'
+                alt='Logo de la empresa'
                 className={styles.logo}
                 width={200}
                 height={200}
@@ -152,6 +152,54 @@ const PhysicianTabBar = (props) => {
     );
 };
 
+const AdminTabBar = (props) => {
+    const router = useRouter();
+    useLayoutEffect(() => {
+        userCheck(router, "admin");
+    }, []);
+
+    return (
+        <div className={styles["tab-bar"]}>
+            <div
+                className={`${styles["tab"]} ${
+                    props.highlight === "Especialidades"
+                        ? styles["selected-tab"]
+                        : ""
+                }`}
+                onClick={() => router.push("/admin-specialties")}
+            >
+                Especialidades
+            </div>
+            <div
+                className={`${styles["tab"]} ${
+                    props.highlight === "Medicos" ? styles["selected-tab"] : ""
+                }`}
+                onClick={() => router.push("/admin-physicians")}
+            >
+                Medicos
+            </div>
+            <div
+                className={`${styles["tab"]} ${
+                    props.highlight === "Metricas" ? styles["selected-tab"] : ""
+                }`}
+                onClick={() => router.push("/admin-metrics")}
+            >
+                Mis metricas
+            </div>
+            <div
+                className={`${styles["tab"]} ${
+                    props.highlight === "RegisterAdmin"
+                        ? styles["selected-tab"]
+                        : ""
+                }`}
+                onClick={() => router.push("/admin-register")}
+            >
+                Registrar Administrador
+            </div>
+        </div>
+    );
+};
+
 const Footer = () => {
     return (
         <footer className={styles["page-footer"]}>
@@ -160,4 +208,4 @@ const Footer = () => {
     );
 };
 
-export { Header, HeaderSlim, TabBar, PhysicianTabBar, Footer };
+export { Header, HeaderSlim, TabBar, PhysicianTabBar, AdminTabBar, Footer };

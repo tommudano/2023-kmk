@@ -118,5 +118,5 @@ def test_add_specialty_with_repeated_name_returns_400_code_and_detail():
     assert response_from_add_specialty_endpoint.status_code == 400
     assert (
         response_from_add_specialty_endpoint.json()["detail"]
-        == "Specialty already exists"
+        == "La especialidad ya existe"
     )
