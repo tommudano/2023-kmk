@@ -9,6 +9,8 @@ import https from "https";
 import { Header, Footer, AdminTabBar } from "../components/header";
 import { toast } from "react-toastify";
 import { userCheck } from "../components/userCheck";
+import PhysicianCard from "../components/PhysicianCard";
+import RatingsModal from "../components/RatingsModal";
 
 const Admin = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +20,8 @@ const Admin = () => {
     const [physicians, setPhysicians] = useState([]);
     const [pendingPhysicians, setPendingPhysicians] = useState([]);
     const [blockedPhysicians, setBlockedPhysicians] = useState([]);
+    const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+    const [scores, setScores] = useState([]);
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -33,7 +37,9 @@ const Admin = () => {
             );
             console.log(response.data.physicians_pending_validation);
             setPendingPhysicians(response.data.physicians_pending_validation);
-            !firstLoad ? toast.success("Profesionales actualizados") : null;
+            !firstLoad
+                ? toast.success("Profesionales por aprobar actualizados")
+                : null;
         } catch (error) {
             console.error(error);
             !firstLoad
@@ -42,7 +48,7 @@ const Admin = () => {
         }
     };
 
-    const fetchPhysicians = async () => {
+    const fetchWorkingPhysicians = async () => {
         try {
             const response = await axios.get(
                 `${apiURL}admin/physicians-working`,
@@ -52,7 +58,9 @@ const Admin = () => {
             );
             console.log(response.data.physicians_working);
             setPhysicians(response.data.physicians_working);
-            !firstLoad ? toast.success("Profesionales actualizados") : null;
+            !firstLoad
+                ? toast.success("Profesionales en funciones actualizados")
+                : null;
         } catch (error) {
             console.error(error);
             !firstLoad
@@ -71,7 +79,9 @@ const Admin = () => {
             );
             console.log(response.data.physicians_blocked);
             setBlockedPhysicians(response.data.physicians_blocked);
-            !firstLoad ? toast.success("Profesionales actualizados") : null;
+            !firstLoad
+                ? toast.success("Profesionales bloquados actualizados")
+                : null;
         } catch (error) {
             console.error(error);
             !firstLoad
@@ -81,7 +91,6 @@ const Admin = () => {
     };
 
     const handleApprovePhysician = async (physician) => {
-        toast.info("Aprobando profesional...");
         try {
             toast.info("Aprobando medico...");
             console.log(physician.id);
@@ -95,7 +104,7 @@ const Admin = () => {
             toast.success("Profesional aprobado");
             setFirstLoad(true);
             fetchPendingPhysicians();
-            fetchPhysicians();
+            fetchWorkingPhysicians();
             fetchBlockedPhysicians();
             setFirstLoad(false);
         } catch (error) {
@@ -105,7 +114,6 @@ const Admin = () => {
     };
 
     const handleDenyPhysician = async (physician) => {
-        toast.info("Denegando profesional...");
         try {
             toast.info("Bloquando medico...");
             console.log(physician.id);
@@ -115,10 +123,10 @@ const Admin = () => {
                     httpsAgent: agent,
                 }
             );
-            toast.success("Profesional denegado");
+            toast.success("Medico bloqueado");
             setFirstLoad(true);
             fetchPendingPhysicians();
-            fetchPhysicians();
+            fetchWorkingPhysicians();
             fetchBlockedPhysicians();
             setFirstLoad(false);
         } catch (error) {
@@ -128,7 +136,6 @@ const Admin = () => {
     };
 
     const handleUnblockPhysician = async (physician) => {
-        toast.info("Desbloqueando profesional...");
         try {
             toast.info("Desbloqueando medico...");
             console.log(physician.id);
@@ -138,10 +145,10 @@ const Admin = () => {
                     httpsAgent: agent,
                 }
             );
-            toast.success("Profesional desbloqueado");
+            toast.success("Medico desbloqueado");
             setFirstLoad(true);
             fetchPendingPhysicians();
-            fetchPhysicians();
+            fetchWorkingPhysicians();
             fetchBlockedPhysicians();
             setFirstLoad(false);
         } catch (error) {
@@ -150,12 +157,49 @@ const Admin = () => {
         }
     };
 
+    const getAppointmentScores = async (id) => {
+        try {
+            const response = await axios.get(`${apiURL}users/score/${id}`, {
+                httpsAgent: agent,
+            });
+            let reviews = [
+                { id: 1, type: "Puntualidad" },
+                { id: 2, type: "Atencion" },
+                { id: 3, type: "Limpieza" },
+                { id: 4, type: "Disponibilidad" },
+                { id: 5, type: "Precio" },
+                { id: 6, type: "Comunicacion" },
+            ];
+
+            reviews[0].rating = response.data.score_metrics.puntuality;
+            reviews[1].rating = response.data.score_metrics.attention;
+            reviews[2].rating = response.data.score_metrics.cleanliness;
+            reviews[3].rating = response.data.score_metrics.availability;
+            reviews[4].rating = response.data.score_metrics.price;
+            reviews[5].rating = response.data.score_metrics.communication;
+            setScores([...reviews]);
+        } catch (error) {
+            toast.error("Error al obtener los puntajes");
+            console.error(error);
+        }
+    };
+
+    const handleOpenRatingModal = async (doctorId) => {
+        await getAppointmentScores(doctorId);
+        setIsRatingModalOpen(true);
+    };
+
+    const handleCloseRatingModal = () => {
+        setScores([]);
+        setIsRatingModalOpen(false);
+    };
+
     useEffect(() => {
         axios.defaults.headers.common = {
             Authorization: `bearer ${localStorage.getItem("token")}`,
         };
         userCheck(router, "admin").then(() => {
-            fetchPhysicians();
+            fetchWorkingPhysicians();
             fetchBlockedPhysicians();
             fetchPendingPhysicians().then(() => setIsLoading(false));
             setFirstLoad(false);
@@ -164,6 +208,14 @@ const Admin = () => {
 
     return (
         <div className={styles.dashboard}>
+            {isRatingModalOpen && (
+                <RatingsModal
+                    isOpen={isRatingModalOpen}
+                    handleCloseRatingModal={handleCloseRatingModal}
+                    scores={scores}
+                />
+            )}
+
             <AdminTabBar highlight='Medicos' />
 
             <Header role='admin' />
@@ -191,67 +243,18 @@ const Admin = () => {
                                 {pendingPhysicians.length > 0 ? (
                                     <div>
                                         {pendingPhysicians.map((doctor) => (
-                                            <div
-                                                key={doctor.id}
-                                                className={
-                                                    styles["appointment"]
+                                            <PhysicianCard
+                                                doctor={doctor}
+                                                handleOpenRatingModal={
+                                                    handleOpenRatingModal
                                                 }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles["subtitle"]
-                                                    }
-                                                >
-                                                    {doctor.first_name +
-                                                        " " +
-                                                        doctor.last_name}
-                                                </div>
-                                                <p>
-                                                    Especialidad:{" "}
-                                                    {doctor.specialty}
-                                                </p>
-                                                <p>E-mail: {doctor.email}</p>
-                                                <p>
-                                                    Matricula: {doctor.tuition}
-                                                </p>
-                                                <div
-                                                    className={
-                                                        styles[
-                                                            "appointment-buttons-container"
-                                                        ]
-                                                    }
-                                                >
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "approve-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleApprovePhysician(
-                                                                doctor
-                                                            )
-                                                        }
-                                                    >
-                                                        Aprobar
-                                                    </button>
-
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "delete-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleDenyPhysician(
-                                                                doctor
-                                                            )
-                                                        }
-                                                    >
-                                                        Bloquear
-                                                    </button>
-                                                </div>
-                                            </div>
+                                                handleApprovePhysician={
+                                                    handleApprovePhysician
+                                                }
+                                                handleDenyPhysician={
+                                                    handleDenyPhysician
+                                                }
+                                            />
                                         ))}
                                     </div>
                                 ) : (
@@ -274,59 +277,22 @@ const Admin = () => {
                                 height={200}
                                 onClick={() => {
                                     toast.info("Actualizando profesionales...");
-                                    fetchPhysicians();
+                                    fetchWorkingPhysicians();
                                 }}
                             />
                             <div className={styles["admin-section"]}>
                                 {physicians.length > 0 ? (
                                     <div>
                                         {physicians.map((doctor) => (
-                                            <div
-                                                key={doctor.id}
-                                                className={
-                                                    styles["appointment"]
+                                            <PhysicianCard
+                                                doctor={doctor}
+                                                handleOpenRatingModal={
+                                                    handleOpenRatingModal
                                                 }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles["subtitle"]
-                                                    }
-                                                >
-                                                    {doctor.first_name +
-                                                        " " +
-                                                        doctor.last_name}
-                                                </div>
-                                                <p>
-                                                    Especialidad:{" "}
-                                                    {doctor.specialty}
-                                                </p>
-                                                <p>E-mail: {doctor.email}</p>
-                                                <p>
-                                                    Matricula: {doctor.tuition}
-                                                </p>
-                                                <div
-                                                    className={
-                                                        styles[
-                                                            "appointment-buttons-container"
-                                                        ]
-                                                    }
-                                                >
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "delete-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleDenyPhysician(
-                                                                doctor
-                                                            )
-                                                        }
-                                                    >
-                                                        Bloquear
-                                                    </button>
-                                                </div>
-                                            </div>
+                                                handleDenyPhysician={
+                                                    handleDenyPhysician
+                                                }
+                                            />
                                         ))}
                                     </div>
                                 ) : (
@@ -354,55 +320,18 @@ const Admin = () => {
                             />
                             <div className={styles["admin-section"]}>
                                 {blockedPhysicians.length > 0 ? (
-                                    // If there are pending doctor approvals, map through them and display each appointment
                                     <div>
                                         {blockedPhysicians.map((doctor) => (
-                                            <div
-                                                key={doctor.id}
-                                                className={
-                                                    styles["appointment"]
+                                            <PhysicianCard
+                                                doctor={doctor}
+                                                handleOpenRatingModal={
+                                                    handleOpenRatingModal
                                                 }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles["subtitle"]
-                                                    }
-                                                >
-                                                    {doctor.first_name +
-                                                        " " +
-                                                        doctor.last_name}
-                                                </div>
-                                                <p>
-                                                    Especialidad:{" "}
-                                                    {doctor.specialty}
-                                                </p>
-                                                <p>E-mail: {doctor.email}</p>
-                                                <p>
-                                                    Matricula: {doctor.tuition}
-                                                </p>
-                                                <div
-                                                    className={
-                                                        styles[
-                                                            "appointment-buttons-container"
-                                                        ]
-                                                    }
-                                                >
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "approve-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleUnblockPhysician(
-                                                                doctor
-                                                            )
-                                                        }
-                                                    >
-                                                        Desbloquear
-                                                    </button>
-                                                </div>
-                                            </div>
+                                                handleApprovePhysician={
+                                                    handleUnblockPhysician
+                                                }
+                                                approveButtonText='Desbloquear'
+                                            />
                                         ))}
                                     </div>
                                 ) : (

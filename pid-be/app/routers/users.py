@@ -419,7 +419,7 @@ def show_score(
     """
     try:
         if Patient.is_patient(user_id):
-            appointments = Appointment.get_all_closed_appointments_for_patient_with(
+            appointments = Appointment.get_all_rated_appointments_for_patient_with(
                 user_id
             )
             score_sums = {

@@ -134,6 +134,39 @@ def get_all_appointments(uid=Depends(Auth.is_logged_in)):
 
 
 @router.get(
+    "/patients-pending-appointments",
+    status_code=status.HTTP_200_OK,
+    response_model=AllAppointmentsResponse,
+    responses={
+        401: {"model": GetAppointmentError},
+        403: {"model": GetAppointmentError},
+        500: {"model": GetAppointmentError},
+    },
+)
+def get_all_pending_appointments(uid=Depends(Auth.is_logged_in)):
+    """
+    Get all appointments.
+
+    This will allow authenticated users to retrieve all their appointments.
+
+    This path operation will:
+
+    * Return all of users appointments ordered by date.
+    * Throw an error if appointment retrieving fails.
+    """
+    try:
+        appointments = Appointment.get_all_pending_appointments_for_patient_with(uid)
+        return {"appointments": appointments}
+    except HTTPException as http_exception:
+        raise http_exception
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal server error"},
+        )
+
+
+@router.get(
     "/physician",
     status_code=status.HTTP_200_OK,
     response_model=AllAppointmentsResponse,

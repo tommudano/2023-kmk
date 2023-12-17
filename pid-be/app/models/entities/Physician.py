@@ -51,7 +51,12 @@ class Physician:
             .where("approved", "==", "approved")
             .get()
         )
-        return [physician.to_dict() for physician in physicians]
+        physiciansList = [physician.to_dict() for physician in physicians]
+        return sorted(
+            physiciansList,
+            key=lambda physician: physician["first_name"].lower()
+            + physician["last_name"].lower(),
+        )
 
     @staticmethod
     def has_availability(id, date):
@@ -95,19 +100,34 @@ class Physician:
         physicians = (
             db.collection("physicians").where("approved", "==", "pending").get()
         )
-        return [physician.to_dict() for physician in physicians]
+        physicians_list = [physician.to_dict() for physician in physicians]
+        return sorted(
+            physicians_list,
+            key=lambda physician: physician["first_name"].lower()
+            + physician["last_name"].lower(),
+        )
 
     @staticmethod
     def get_physicians_working():
         physicians = (
             db.collection("physicians").where("approved", "==", "approved").get()
         )
-        return [physician.to_dict() for physician in physicians]
+        physicians_list = [physician.to_dict() for physician in physicians]
+        return sorted(
+            physicians_list,
+            key=lambda physician: physician["first_name"].lower()
+            + physician["last_name"].lower(),
+        )
 
     @staticmethod
     def get_physicians_denied():
         physicians = db.collection("deniedPhysicians").get()
-        return [physician.to_dict() for physician in physicians]
+        physicians_list = [physician.to_dict() for physician in physicians]
+        return sorted(
+            physicians_list,
+            key=lambda physician: physician["first_name"].lower()
+            + physician["last_name"].lower(),
+        )
 
     @staticmethod
     def is_physician(id):

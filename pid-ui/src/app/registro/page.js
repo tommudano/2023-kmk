@@ -9,6 +9,7 @@ import https from "https";
 import validator from "validator";
 import { HeaderSlim, Footer } from "../components/header";
 import { toast } from "react-toastify";
+import { registerCheck } from "../components/userCheck";
 
 const Registro = () => {
     const apiURL = process.env.NEXT_PUBLIC_API_URL;
@@ -137,6 +138,7 @@ const Registro = () => {
     };
 
     useEffect(() => {
+        registerCheck(router).then(() => {});
         fetchSpecialties();
 
         fetchGenders();

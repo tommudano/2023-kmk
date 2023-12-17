@@ -26,7 +26,7 @@ const MyRecord = () => {
     });
     const inputRef = useRef(null);
     const [showModal, setShowModal] = useState(false);
-    const [selectedFile, setSelectedFile] = useState('');
+    const [selectedFile, setSelectedFile] = useState("");
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -72,7 +72,9 @@ const MyRecord = () => {
     const handleDeleteFile = async () => {
         setShowModal(false);
         try {
-            const response = await axios.delete(`${apiURL}analysis/${selectedFile}`);
+            const response = await axios.delete(
+                `${apiURL}analysis/${selectedFile}`
+            );
             console.log(response);
             toast.success("Analisis eliminado con exito");
             fetchMyAnalysis();
@@ -81,18 +83,6 @@ const MyRecord = () => {
             toast.error("Error al eliminar analisis");
         }
     };
-    
-    // const handleFileDelete = async (id) => {
-    //     try {
-    //         const response = await axios.delete(`${apiURL}analysis/${id}`);
-    //         console.log(response);
-    //         toast.success("Analisis eliminado con exito");
-    //         fetchMyAnalysis();
-    //     } catch (error) {
-    //         console.error(error);
-    //         toast.error("Error al eliminar analisis");
-    //     }
-    // };
 
     const resetFileInput = () => {
         inputRef.current.value = null;
@@ -127,9 +117,9 @@ const MyRecord = () => {
 
     return (
         <div className={styles.dashboard}>
-            <TabBar highlight="Ficha" />
+            <TabBar highlight='Ficha' />
 
-            <Header role="patient" />
+            <Header role='patient' />
 
             {isLoading ? (
                 <p>Cargando...</p>
@@ -141,8 +131,8 @@ const MyRecord = () => {
                                 {record.name} {record.last_name}
                             </div>
                             <Image
-                                src="/refresh_icon.png"
-                                alt="Refrescar"
+                                src='/refresh_icon.png'
+                                alt='Refrescar'
                                 className={styles["refresh-icon"]}
                                 width={200}
                                 height={200}
@@ -197,8 +187,8 @@ const MyRecord = () => {
                                                             ) + "..."}
                                                         </div>
                                                         <Image
-                                                            src="/document.png"
-                                                            alt=""
+                                                            src='/document.png'
+                                                            alt=''
                                                             className={
                                                                 styles[
                                                                     "document-icon"
@@ -237,8 +227,8 @@ const MyRecord = () => {
                                                         </div>
                                                     </div>
                                                     <Image
-                                                        src="/trash_icon.png"
-                                                        alt=""
+                                                        src='/trash_icon.png'
+                                                        alt=''
                                                         className={
                                                             styles[
                                                                 "document-icon"
@@ -276,12 +266,12 @@ const MyRecord = () => {
                                     isOpen={showModal}
                                     closeModal={() => setShowModal(false)}
                                     confirmAction={handleDeleteFile}
-                                    message="¿Estás seguro de que deseas eliminar este archivo?"
+                                    message='¿Estás seguro de que deseas eliminar este archivo?'
                                 />
 
                                 <form className={styles["file-upload-form"]}>
                                     <label
-                                        htmlFor="files"
+                                        htmlFor='files'
                                         className={styles["upload-button"]}
                                         style={{ color: "#fff" }}
                                     >
@@ -289,10 +279,10 @@ const MyRecord = () => {
                                     </label>
 
                                     <input
-                                        id="files"
-                                        type="file"
-                                        name="file"
-                                        accept=".pdf"
+                                        id='files'
+                                        type='file'
+                                        name='file'
+                                        accept='.pdf'
                                         multiple={true}
                                         onChange={(e) => {
                                             onSubmit(e.target.files);
@@ -330,8 +320,9 @@ const MyRecord = () => {
                                                     >
                                                         Observacion del{" "}
                                                         {new Date(
-                                                            observation.appointment_date *
-                                                                1000
+                                                            Number(
+                                                                observation.real_start_time
+                                                            ) * 1000
                                                         ).toLocaleDateString(
                                                             "es-AR"
                                                         )}{" "}

@@ -12,6 +12,8 @@ from app.models.entities.Admin import Admin
 from app.models.responses.AdminResponses import (
     SuccessfullAdminRegistrationResponse,
     AdminRegistrationError,
+    AdminUserResponse,
+    GetAdminUserError,
 )
 from app.models.requests.AdminRequests import AdminRegisterRequest
 from app.models.responses.ValidationResponses import (
@@ -308,7 +310,7 @@ def regsiter_admin(
         user = auth.get_user_by_email(admin_resgister_request.email)
         auth_uid = user.uid
     except:
-        print("[+] User already doesnt exist in authentication")
+        print("[+] User doesnt exist in authentication")
 
     if not auth_uid:
         register_response = requests.post(
@@ -332,7 +334,7 @@ def regsiter_admin(
         **admin_resgister_request.model_dump(), id=auth_uid, registered_by=uid
     )
     admin.create()
-    return {"message": "Successfull registration"}
+    return {"message": "Registro exitoso"}
 
 
 @router.get(
@@ -349,3 +351,23 @@ def regsiter_admin(
 def get_specialties_with_physician_count(uid=Depends(Auth.is_admin)):
     specialies_with_physician_count = Admin.get_specialies_with_physician_count()
     return {"specialties": specialies_with_physician_count}
+
+
+@router.get(
+    "/user-info",
+    status_code=status.HTTP_200_OK,
+    response_model=AdminUserResponse,
+    responses={
+        401: {"model": GetAdminUserError},
+        403: {"model": GetAdminUserError},
+        500: {"model": GetAdminUserError},
+    },
+)
+def get_admin_user_info(user_id=Depends(Auth.is_admin)):
+    try:
+        return Admin.get_by_id(user_id)
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal server error"},
+        )

@@ -6,6 +6,38 @@ const agent = new https.Agent({
     rejectUnauthorized: false,
 });
 
+const registerCheck = async (router) => {
+    const apiURL = process.env.NEXT_PUBLIC_API_URL;
+    try {
+        axios.defaults.headers.common = {
+            Authorization: `bearer ${localStorage.getItem("token")}`,
+        };
+        const response = await axios.get(`${apiURL}users/role`, {
+            httpsAgent: agent,
+        });
+        if (response.status == 200) {
+            switch (response.data.roles[0]) {
+                case "admin":
+                    router.replace("/admin-specialties");
+                    break;
+                case "physician":
+                    router.replace("/physician-agenda");
+                    break;
+                case "patient":
+                    router.replace("/patient-dashboard");
+                    break;
+                default:
+                    router.replace("/registro");
+                    break;
+            }
+        } else {
+            router.replace("/registro");
+        }
+    } catch (error) {
+        router.replace("/registro");
+    }
+};
+
 const loginCheck = async (router) => {
     const apiURL = process.env.NEXT_PUBLIC_API_URL;
     try {
@@ -19,7 +51,7 @@ const loginCheck = async (router) => {
             console.log(response.data.roles);
             switch (response.data.roles[0]) {
                 case "admin":
-                    router.replace("/dashboard-admin");
+                    router.replace("/admin-specialties");
                     break;
                 case "physician":
                     router.replace("/physician-agenda");
@@ -74,7 +106,7 @@ const redirect = async (router) => {
         if (response.status == 200) {
             switch (response.data.roles[0]) {
                 case "admin":
-                    router.replace("/dashboard-admin");
+                    router.replace("/admin-specialties");
                     break;
                 case "physician":
                     router.replace("/physician-agenda");
@@ -132,4 +164,4 @@ const userCheck = async (router, role) => {
     }
 };
 
-export { loginCheck, redirect, userCheck };
+export { loginCheck, redirect, userCheck, registerCheck };

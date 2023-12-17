@@ -75,6 +75,9 @@ const HeaderSlim = () => {
                 className={styles.logo}
                 width={200}
                 height={200}
+                onClick={() => {
+                    redirect(router);
+                }}
             />
         </div>
     );
@@ -98,7 +101,17 @@ const TabBar = (props) => {
                 }`}
                 onClick={handleLogoClick}
             >
-                Turnos
+                Turnos Vigentes
+            </div>
+            <div
+                className={`${styles["tab"]} ${
+                    props.highlight === "SolicitarTurnos"
+                        ? styles["selected-tab"]
+                        : ""
+                }`}
+                onClick={() => router.push("/patient-appointments")}
+            >
+                Solicitar Turno
             </div>
             <div
                 className={`${styles["tab"]} ${
@@ -122,13 +135,13 @@ const PhysicianTabBar = (props) => {
         <div className={styles["tab-bar"]}>
             <div
                 className={`${styles["tab"]} ${
-                    props.highlight === "TurnosDelDia"
+                    props.highlight === "TurnosActivos"
                         ? styles["selected-tab"]
                         : ""
                 }`}
                 onClick={() => router.push("/physician-agenda")}
             >
-                Próximos turnos
+                Turnos Activos
             </div>
             <div
                 className={`${styles["tab"]} ${
