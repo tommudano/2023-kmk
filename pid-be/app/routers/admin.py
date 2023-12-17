@@ -305,29 +305,30 @@ def regsiter_admin(
     * Throw an error if the registration fails.
     """
     url = os.environ.get("REGISTER_URL")
-    auth_uid = None
     try:
-        user = auth.get_user_by_email(admin_resgister_request.email)
-        auth_uid = user.uid
+        auth.get_user_by_email(admin_resgister_request.email)
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Esta cuenta ya fue registrada"},
+        )
     except:
         print("[+] User doesnt exist in authentication")
 
-    if not auth_uid:
-        register_response = requests.post(
-            url,
-            json={
-                "email": admin_resgister_request.email,
-                "password": admin_resgister_request.password,
-                "returnSecureToken": True,
-            },
-            params={"key": firebase_client_config["apiKey"]},
+    register_response = requests.post(
+        url,
+        json={
+            "email": admin_resgister_request.email,
+            "password": admin_resgister_request.password,
+            "returnSecureToken": True,
+        },
+        params={"key": firebase_client_config["apiKey"]},
+    )
+    if register_response.status_code != 200:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal server error"},
         )
-        if register_response.status_code != 200:
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"detail": "Internal server error"},
-            )
-        auth_uid = register_response.json()["localId"]
+    auth_uid = register_response.json()["localId"]
 
     del admin_resgister_request.password
     admin = Admin(

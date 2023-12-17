@@ -133,7 +133,9 @@ const Registro = () => {
         } catch (error) {
             setDisabledRegisterButton(false);
             console.error(error);
-            toast.error("Ha ocurrido un error");
+            if (error.response.status === 400)
+                toast.error(error.response.data.detail);
+            else toast.error("Ha ocurrido un error");
         }
     };
 
