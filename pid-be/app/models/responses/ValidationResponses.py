@@ -39,6 +39,7 @@ class GetBlockedPhysiciansError(BaseModel):
 class AdminGetSpecialtyResponse(BaseModel):
     name: str
     physicians_count: int
+    value: int
 
 
 class SuccessfulAdminSpecialtiesGetResponse(BaseModel):
@@ -46,4 +47,8 @@ class SuccessfulAdminSpecialtiesGetResponse(BaseModel):
 
 
 class AdminSpecialtiesGetError(BaseModel):
+    detail: str
+
+
+class AdminSpecialtiesPutError(BaseModel):
     detail: str

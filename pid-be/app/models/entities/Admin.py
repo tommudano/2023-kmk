@@ -74,13 +74,14 @@ class Admin:
             physician_count_for_specialty = (
                 db.collection("physicians")
                 .where("approved", "==", "approved")
-                .where("specialty", "==", specialty)
+                .where("specialty", "==", specialty["name"])
                 .count()
                 .get()
             )
             specialies_with_physician_count.append(
                 {
-                    "name": specialty,
+                    "name": specialty["name"],
+                    "value": specialty["value"],
                     "physicians_count": physician_count_for_specialty[0][0].value,
                 }
             )

@@ -18,3 +18,7 @@ class AdminUserResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
+
+
+class SuccessfulSpecialtyUpdateValueResponse(BaseModel):
+    message: str

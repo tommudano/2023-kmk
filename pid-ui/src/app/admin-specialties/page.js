@@ -10,6 +10,10 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { Header, Footer, AdminTabBar } from "../components/header";
 import { toast } from "react-toastify";
 import { userCheck } from "../components/userCheck";
+import ValueModal from "../components/ValueModal";
+import InfoIcon from "@mui/icons-material/Info";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
 const Admin = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +24,8 @@ const Admin = () => {
     const [newSpecialty, setNewSpecialty] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [selectedSpecialty, setSelectedSpecialty] = useState("");
+    const [showValueModal, setShowValueModal] = useState(false);
+    const [newValue, setNewValue] = useState(3000);
     const [disabledSpecialtyAddButton, setDisabledSpecialtyAddButton] =
         useState(false);
 
@@ -72,6 +78,11 @@ const Admin = () => {
         setShowModal(true);
     };
 
+    const handleValueUpdate = (specialty) => {
+        setSelectedSpecialty(specialty);
+        setShowValueModal(true);
+    };
+
     const handleDeleteConfirmation = async () => {
         setShowModal(false);
         try {
@@ -81,6 +92,23 @@ const Admin = () => {
             );
             console.log(response.data);
             toast.success("Especialidad eliminada exitosamente");
+            fetchSpecialties();
+        } catch (error) {
+            console.error(error);
+            toast.error("Error al borrar especialidad");
+        }
+    };
+
+    const handleChangeValue = async () => {
+        setShowValueModal(false);
+        try {
+            toast.info("Actualizando valor...");
+            const response = await axios.put(
+                `${apiURL}admin/specialties/value/${selectedSpecialty.name}`,
+                { value: newValue }
+            );
+            console.log(response.data);
+            toast.success("Valor actualizado exitosamente");
             fetchSpecialties();
         } catch (error) {
             console.error(error);
@@ -100,6 +128,15 @@ const Admin = () => {
 
     return (
         <div className={styles.dashboard}>
+            <ValueModal
+                isOpen={showValueModal}
+                closeModal={() => setShowValueModal(false)}
+                confirmAction={handleChangeValue}
+                currentValue={selectedSpecialty.value}
+                setNewValue={setNewValue}
+                message={`¿Cual es el nuevo valor de la especialidad ${selectedSpecialty.name}?`}
+            />
+
             <ConfirmationModal
                 isOpen={showModal}
                 closeModal={() => setShowModal(false)}
@@ -124,6 +161,14 @@ const Admin = () => {
                         <div className={styles.form}>
                             <div className={styles["title"]}>
                                 Especialidades
+                                <Tooltip
+                                    title='Al crear una especialidad, esta se crea con un valor de $3000. Desde la lista podes editar este valor una vez creada la especialidad.'
+                                    placement='right'
+                                >
+                                    <IconButton>
+                                        <InfoIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </div>
                             <Image
                                 src='/refresh_icon.png'
@@ -188,6 +233,21 @@ const Admin = () => {
                                                         ]
                                                     }
                                                 >
+                                                    <Image
+                                                        src='/money_icon.png'
+                                                        alt='borrar'
+                                                        className={styles.logo}
+                                                        style={{
+                                                            marginRight: "15px",
+                                                        }}
+                                                        width={25}
+                                                        height={25}
+                                                        onClick={() => {
+                                                            handleValueUpdate(
+                                                                specialty
+                                                            );
+                                                        }}
+                                                    />
                                                     <Image
                                                         src='/trash_icon.png'
                                                         alt='borrar'

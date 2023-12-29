@@ -18,9 +18,14 @@ class Specialty:
         self.id = id
 
     @staticmethod
-    def get_all():
+    def get_all_names():
         specialties_doc = db.collection("specialties").order_by("name").get()
         return [specialty_doc.to_dict()["name"] for specialty_doc in specialties_doc]
+
+    @staticmethod
+    def get_all():
+        specialties_doc = db.collection("specialties").order_by("name").get()
+        return [specialty_doc.to_dict() for specialty_doc in specialties_doc]
 
     @staticmethod
     def exists_with_name(name):
@@ -36,7 +41,9 @@ class Specialty:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="La especialidad ya existe",
             )
-        db.collection("specialties").document().set({"name": name.lower()})
+        db.collection("specialties").document().set(
+            {"name": name.lower(), "value": 3000}
+        )
 
     @staticmethod
     def delete_specialty(name):
@@ -46,3 +53,8 @@ class Specialty:
 
         for doc in docs:
             doc.reference.delete()
+
+    @staticmethod
+    def update_value(name, value):
+        docs = db.collection("specialties").where("name", "==", name.lower()).get()
+        db.collection("specialties").document(docs[0].id).update({"value": value})

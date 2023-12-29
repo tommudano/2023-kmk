@@ -6,16 +6,21 @@ from firebase_admin import auth
 from fastapi import APIRouter, status, Depends
 from fastapi.responses import JSONResponse
 
+from app.models.entities.Specialty import Specialty
 from app.models.entities.Physician import Physician
 from app.models.entities.Auth import Auth
 from app.models.entities.Admin import Admin
 from app.models.responses.AdminResponses import (
     SuccessfullAdminRegistrationResponse,
+    SuccessfulSpecialtyUpdateValueResponse,
     AdminRegistrationError,
     AdminUserResponse,
     GetAdminUserError,
 )
-from app.models.requests.AdminRequests import AdminRegisterRequest
+from app.models.requests.AdminRequests import (
+    AdminRegisterRequest,
+    SpecialtyUpdateValueRequest,
+)
 from app.models.responses.ValidationResponses import (
     SuccessfullValidationResponse,
     ValidationErrorResponse,
@@ -26,6 +31,7 @@ from app.models.responses.ValidationResponses import (
     AllBlockedPhysiciansResponse,
     GetBlockedPhysiciansError,
     AdminSpecialtiesGetError,
+    AdminSpecialtiesPutError,
     SuccessfulAdminSpecialtiesGetResponse,
 )
 
@@ -352,6 +358,25 @@ def regsiter_admin(
 def get_specialties_with_physician_count(uid=Depends(Auth.is_admin)):
     specialies_with_physician_count = Admin.get_specialies_with_physician_count()
     return {"specialties": specialies_with_physician_count}
+
+
+@router.put(
+    "/specialties/value/{specialty_name}",
+    status_code=status.HTTP_200_OK,
+    response_model=SuccessfulSpecialtyUpdateValueResponse,
+    responses={
+        401: {"model": AdminSpecialtiesPutError},
+        403: {"model": AdminSpecialtiesPutError},
+        500: {"model": AdminSpecialtiesPutError},
+    },
+)
+def update_specialty_value(
+    specialty_name: str,
+    specialty_update_value_request: SpecialtyUpdateValueRequest,
+    uid=Depends(Auth.is_admin),
+):
+    Specialty.update_value(specialty_name, specialty_update_value_request.value)
+    return {"message": "Successfull update"}
 
 
 @router.get(

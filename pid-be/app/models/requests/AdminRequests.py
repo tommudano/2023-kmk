@@ -8,3 +8,7 @@ class AdminRegisterRequest(BaseModel):
     last_name: str = Field(min_length=1)
     email: Annotated[str, Query(pattern="^[-\w\.]+@([-\w]+\.)+[-\w]{2,4}$")]
     password: str
+
+
+class SpecialtyUpdateValueRequest(BaseModel):
+    value: int = Field(ge=1)
