@@ -115,7 +115,7 @@ const DashboardPatient = () => {
             right: "auto",
             bottom: "auto",
             marginRight: "-50%",
-            transform: "translate(-50%, -50%)",
+            transform: "translate(-50%, -30%)",
             width: "80%",
         },
     };
@@ -247,7 +247,7 @@ const DashboardPatient = () => {
             )}
 
             <div className={styles.dashboard}>
-                <TabBar highlight='Turnos' />
+                <TabBar highlight='SolicitarTurnos' />
 
                 <Header role='patient' />
 
@@ -261,7 +261,8 @@ const DashboardPatient = () => {
                                     Turnos pendientes de reseña
                                 </div>
                                 <div className={styles["subtitle"]}>
-                                    Usted tiene {appointments.length} turnos
+                                    Usted tiene {appointments.length} turno
+                                    {appointments.length === 1 ? " " : "s "}
                                     pendientes de reseña.
                                 </div>
                                 <div className={styles["subtitle"]}>
@@ -297,7 +298,12 @@ const DashboardPatient = () => {
                                                             styles["subtitle"]
                                                         }
                                                     >
-                                                        {appointment.specialty}
+                                                        {appointment.specialty
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            appointment.specialty.slice(
+                                                                1
+                                                            )}
                                                     </div>
                                                     <p>
                                                         Profesional:{" "}

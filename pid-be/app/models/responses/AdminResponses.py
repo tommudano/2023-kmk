@@ -7,3 +7,18 @@ class SuccessfullAdminRegistrationResponse(BaseModel):
 
 class AdminRegistrationError(BaseModel):
     detail: str
+
+
+class GetAdminUserError(BaseModel):
+    detail: str
+
+
+class AdminUserResponse(BaseModel):
+    id: str
+    first_name: str
+    last_name: str
+    email: str
+
+
+class SuccessfulSpecialtyUpdateValueResponse(BaseModel):
+    message: str

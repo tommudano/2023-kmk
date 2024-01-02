@@ -457,6 +457,15 @@
     background-color: #1e7e34; /* Cambia el color al pasar el mouse */
 }
 
+.disabled-approve-button {
+    background-color: #96d3a4; /* Cambia el color para el botón de aprobar */
+    color: #fff;
+}
+.disabled-approve-button:hover {
+    background-color: #b0dcba; /* Cambia el color al pasar el mouse */
+    cursor: not-allowed;
+}
+
 .delete-button {
     background-color: #ca1a1a; /* Cambia el color para el botón de eliminar */
     color: #fff;
@@ -465,12 +474,30 @@
     background-color: #a00000; /* Cambia el color al pasar el mouse */
 }
 
+.disabled-delete-button {
+    background-color: #c99e9e; /* Cambia el color para el botón de eliminar */
+    color: #fff;
+}
+.disabled-delete-button:hover {
+    background-color: #debaba; /* Cambia el color al pasar el mouse */
+    cursor: not-allowed;
+}
+
 .edit-button {
     background-color: rgb(38, 60, 132);
     color: #fff;
 }
 .edit-button:hover {
     background-color: rgb(17, 38, 106);
+}
+
+.disabled-edit-button {
+    background-color: rgb(106, 135, 232);
+    color: #fff;
+}
+.disabled-edit-button:hover {
+    background-color: rgb(133, 158, 241);
+    cursor: not-allowed;
 }
 
 .add-button {
@@ -483,11 +510,11 @@
 }
 
 .disabled-button {
-    background-color: #ccc;
+    background-color: #ccc !important;
     cursor: not-allowed;
 }
 .disabled-button:hover {
-    background-color: #ccc;
+    background-color: #ccc !important;
     cursor: not-allowed;
 }
 
@@ -523,4 +550,41 @@
 }
 .refresh-icon:hover {
     filter: brightness(0.5);
+}
+
+.logo {
+    cursor: pointer;
+}
+
+.button {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    text-align: center;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+.viewScoreButton {
+    color: rgb(84, 112, 205) !important;
+    font-weight: 500;
+}
+
+.viewScoreButton:hover {
+    color: rgb(9, 31, 104) !important;
+    cursor: pointer;
+}
+
+.disabled-input-info {
+    cursor: not-allowed !important;
+    background-color: #ccc !important;
+    border-color: #9a9a9a !important;
 }

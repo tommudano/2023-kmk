@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import Link from "next/link";
 import styles from "./landing.module.css";
 import { useRouter } from "next/navigation";
@@ -21,11 +21,11 @@ const Landing = () => {
         rejectUnauthorized: false,
     });
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         console.log(process.env.NEXT_PUBLIC_API_URL);
         console.log(apiURL);
 
-        loginCheck(router);
+        loginCheck(router).then(() => {});
     }, []);
 
     const handleLogin = async (e) => {

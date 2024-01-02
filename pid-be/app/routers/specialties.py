@@ -38,7 +38,7 @@ def get_all_specialties():
     * Throw an error if specialty retrieving fails.
     """
     try:
-        specialties = Specialty.get_all()
+        specialties = Specialty.get_all_names()
         return {"specialties": specialties}
     except:
         return JSONResponse(
@@ -75,7 +75,7 @@ def add_specialty(
     """
     try:
         Specialty.add_specialty(specialty_name)
-        updated_specialties = Specialty.get_all()
+        updated_specialties = Specialty.get_all_names()
         return {"specialties": updated_specialties}
     except HTTPException as http_exception:
         return JSONResponse(
@@ -116,7 +116,7 @@ def delete_specialty(
     """
     try:
         Specialty.delete_specialty(specialty_name)
-        updated_specialties = Specialty.get_all()
+        updated_specialties = Specialty.get_all_names()
         return {"specialties": updated_specialties}
     except:
         return JSONResponse(

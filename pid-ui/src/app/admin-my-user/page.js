@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import styles from "../styles/styles.module.css";
 import subTabStyles from "../styles/subTab.module.css";
 import axios from "axios";
-import https from "https";
 import validator from "validator";
-import { Footer, Header, TabBar } from "../components/header";
+import { AdminTabBar, Footer, Header, TabBar } from "../components/header";
 import { toast } from "react-toastify";
 
 const UserProfile = () => {
@@ -23,39 +22,6 @@ const UserProfile = () => {
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [error, setError] = useState("");
     const [activeSubTab, setActiveSubTab] = useState("tab1");
-    const [patientScores, setPatientScores] = useState([]);
-
-    const agent = new https.Agent({
-        rejectUnauthorized: false,
-    });
-
-    const getPatientScores = async (id) => {
-        try {
-            const response = await axios.get(`${apiURL}users/score/${id}`, {
-                httpsAgent: agent,
-            });
-            console.log(response.data.score_metrics);
-
-            let tempReviews = [
-                { id: 1, type: "Puntualidad", rating: 0 },
-                { id: 2, type: "Asistencia", rating: 0 },
-                { id: 3, type: "Limpieza", rating: 0 },
-                { id: 4, type: "Trato", rating: 0 },
-                { id: 5, type: "Comunicacion", rating: 0 },
-            ];
-
-            tempReviews[0].rating = response.data.score_metrics.puntuality;
-            tempReviews[1].rating = response.data.score_metrics.attendance;
-            tempReviews[2].rating = response.data.score_metrics.cleanliness;
-            tempReviews[3].rating = response.data.score_metrics.treat;
-            tempReviews[4].rating = response.data.score_metrics.communication;
-
-            setPatientScores(tempReviews);
-        } catch (error) {
-            toast.error("Error al obtener los puntajes");
-            console.error(error);
-        }
-    };
 
     const validate = (value) => {
         if (
@@ -77,16 +43,17 @@ const UserProfile = () => {
 
     const getUserData = async () => {
         try {
-            const response = await axios.get(`${apiURL}users/user-info`);
+            const response = await axios.get(`${apiURL}admin/user-info`);
+
+            console.log(response);
+
             let user = {
                 firstName: response.data.first_name,
                 lastName: response.data.last_name,
                 email: response.data.email,
                 bloodtype: response.data.blood_type,
-                id: response.data.id,
             };
-            setUser({ ...user });
-            getPatientScores(user.id);
+            setUser(user);
         } catch (error) {
             console.error(error);
             toast.error("Error al obtener los datos del usuario");
@@ -124,7 +91,6 @@ const UserProfile = () => {
 
     const handleTab1 = () => setActiveSubTab("tab1");
     const handleTab2 = () => setActiveSubTab("tab2");
-    const handleTab3 = () => setActiveSubTab("tab3");
 
     useEffect(() => {
         getUserData().then(() => setIsLoading(false));
@@ -132,9 +98,9 @@ const UserProfile = () => {
 
     return (
         <div className={styles.dashboard}>
-            <TabBar />
+            <AdminTabBar />
 
-            <Header role='patient' />
+            <Header role='admin' />
 
             {isLoading ? (
                 <p>Cargando...</p>
@@ -162,16 +128,6 @@ const UserProfile = () => {
                                     onClick={handleTab2}
                                 >
                                     Cambiar contrase&ntilde;a
-                                </li>
-                                <li
-                                    className={`${subTabStyles.subTabElement} ${
-                                        activeSubTab === "tab3"
-                                            ? subTabStyles.activeSubTabElement
-                                            : subTabStyles.inactiveSubTabElement
-                                    }`}
-                                    onClick={handleTab3}
-                                >
-                                    Mi Puntaje
                                 </li>
                             </ul>
                         </div>
@@ -221,8 +177,7 @@ const UserProfile = () => {
                                     />
                                 </div>
                             </div>
-                        ) : null}
-                        {activeSubTab === "tab2" ? (
+                        ) : (
                             <div className={styles["form"]}>
                                 <div className={styles["title"]}>
                                     Cambiar Contraseña
@@ -303,64 +258,7 @@ const UserProfile = () => {
                                     Cambiar Contraseña
                                 </button>
                             </div>
-                        ) : null}
-
-                        {activeSubTab === "tab3" ? (
-                            patientScores.length > 0 ? (
-                                <>
-                                    {patientScores.map((review) => (
-                                        <div
-                                            key={review.id}
-                                            className={styles["review"]}
-                                        >
-                                            <div
-                                                className={
-                                                    styles[
-                                                        "review-cards-container"
-                                                    ]
-                                                }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles["review-card"]
-                                                    }
-                                                >
-                                                    <div
-                                                        className={
-                                                            styles[
-                                                                "review-card-title"
-                                                            ]
-                                                        }
-                                                    >
-                                                        {review.type}
-                                                    </div>
-                                                    <div
-                                                        className={
-                                                            styles[
-                                                                "review-card-content"
-                                                            ]
-                                                        }
-                                                    >
-                                                        {review.rating}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </>
-                            ) : (
-                                // If there are no reviews, display the message
-                                <div
-                                    style={{
-                                        fontSize: "20px",
-                                        paddingLeft: "1rem",
-                                        marginBottom: "1rem",
-                                    }}
-                                >
-                                    No hay reviews
-                                </div>
-                            )
-                        ) : null}
+                        )}
                     </div>
                     <Footer />
                 </>

@@ -9,6 +9,7 @@ import https from "https";
 import validator from "validator";
 import { HeaderSlim, Footer } from "../components/header";
 import { toast } from "react-toastify";
+import { registerCheck } from "../components/userCheck";
 
 const Registro = () => {
     const apiURL = process.env.NEXT_PUBLIC_API_URL;
@@ -132,11 +133,14 @@ const Registro = () => {
         } catch (error) {
             setDisabledRegisterButton(false);
             console.error(error);
-            toast.error("Ha ocurrido un error");
+            if (error.response.status === 400)
+                toast.error(error.response.data.detail);
+            else toast.error("Ha ocurrido un error");
         }
     };
 
     useEffect(() => {
+        registerCheck(router).then(() => {});
         fetchSpecialties();
 
         fetchGenders();
