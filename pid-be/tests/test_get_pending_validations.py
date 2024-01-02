@@ -2,7 +2,7 @@ import pytest
 from firebase_admin import firestore, auth
 from app.main import app
 from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 
 client = TestClient(app)

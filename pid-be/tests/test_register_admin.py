@@ -147,10 +147,7 @@ def test_register_admin_returns_a_message():
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
-    assert (
-        response_from_register_admin_endpoint.json()["message"]
-        == "Successfull registration"
-    )
+    assert response_from_register_admin_endpoint.json()["message"] == "Registro exitoso"
 
 
 def test_register_admin_creates_record_in_authentication():
@@ -208,7 +205,7 @@ def test_register_admin_twice_returns_a_400_code():
 
     assert first_register_admin.status_code == 201
     assert second_register_admin.status_code == 400
-    assert second_register_admin.json()["detail"] == "The admin already exists"
+    assert second_register_admin.json()["detail"] == "Esta cuenta ya fue registrada"
 
 
 def test_register_admin_with_empty_name_returns_a_422_code():
@@ -399,4 +396,8 @@ def test_a_previously_created_user_as_non_admin_can_be_registered_as_admin():
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
-    assert response_from_admin_registration_endpoint.status_code == 201
+    assert response_from_admin_registration_endpoint.status_code == 400
+    assert (
+        response_from_admin_registration_endpoint.json()["detail"]
+        == "Esta cuenta ya fue registrada"
+    )

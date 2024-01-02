@@ -194,7 +194,7 @@ def test_register_patient_twice_returns_a_400_code():
 
     assert first_register_patient.status_code == 201
     assert second_register_patient.status_code == 400
-    assert second_register_patient.json()["detail"] == "The user already exists"
+    assert second_register_patient.json()["detail"] == "Esta cuenta ya fue registrada"
 
 
 def test_register_patient_with_empty_name_returns_a_422_code():
@@ -460,7 +460,7 @@ def test_register_physician_with_missing_tuition_returns_a_422_code():
     assert register_physician_response.status_code == 422
 
 
-def test_register_patient_twice_returns_a_400_code():
+def test_register_physician_twice_returns_a_400_code():
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
@@ -476,10 +476,10 @@ def test_register_patient_twice_returns_a_400_code():
 
     assert first_register_patient.status_code == 201
     assert second_register_patient.status_code == 400
-    assert second_register_patient.json()["detail"] == "The user already exists"
+    assert second_register_patient.json()["detail"] == "Esta cuenta ya fue registrada"
 
 
-def test_register_user_as_physician_and_as_patient_is_valid():
+def test_register_user_as_physician_and_as_patient_is_invalid():
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
@@ -494,12 +494,15 @@ def test_register_user_as_physician_and_as_patient_is_valid():
         )
 
     assert response_to_register_endpoint_as_physician.status_code == 201
-    assert response_to_register_endpoint_as_patient.status_code == 201
+    assert response_to_register_endpoint_as_patient.status_code == 400
+    assert (
+        response_to_register_endpoint_as_patient.json()["detail"]
+        == "Esta cuenta ya fue registrada"
+    )
 
     another_created_test_user_uid = auth.get_user_by_email(
         another_KMK_patient_information["email"]
     ).uid
-    db.collection("patients").document(another_created_test_user_uid).delete()
     db.collection("physicians").document(another_created_test_user_uid).delete()
     auth.delete_user(another_created_test_user_uid)
 
