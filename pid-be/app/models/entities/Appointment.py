@@ -1,4 +1,5 @@
 import time
+import os
 import requests
 from datetime import datetime
 from firebase_admin import firestore
@@ -299,7 +300,7 @@ class Appointment:
         patient = Patient.get_by_id(self.patient_id)
         date = datetime.fromtimestamp(self.date)
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "CANCELED_APPOINTMENT_DUE_TO_PHYSICIAN_DENIAL",
                 "data": {

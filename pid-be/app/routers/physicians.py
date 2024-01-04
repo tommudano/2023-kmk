@@ -1,3 +1,4 @@
+import os
 import requests
 from datetime import datetime
 from typing import Dict
@@ -96,7 +97,7 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
         physician = Physician.get_by_id(appointment.physician_id)
         date = datetime.fromtimestamp(appointment.date)
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "APPROVED_APPOINTMENT"
                 if not appointment.updated_at
