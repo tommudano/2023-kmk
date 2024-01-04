@@ -39,6 +39,8 @@ jobs:
             - name: Run emualtors and backend tests
               env:
                   ENV: ${{ secrets.ENV }}
+                  PORT: ${{ secrets.PORT }}
+                  NOTIFICATIONS_API_URL: ${{ secrets.NOTIFICATIONS_API_URL }}
                   REGISTER_URL: ${{ secrets.REGISTER_URL }}
                   LOGIN_URL: ${{ secrets.LOGIN_URL }}
                   PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -53,12 +55,14 @@ jobs:
                   UNIVERSE_DOMAIN: ${{ secrets.UNIVERSE_DOMAIN }}
                   FIREBASE_AUTH_EMULATOR_HOST: ${{ secrets.FIREBASE_AUTH_EMULATOR_HOST }}
                   FIRESTORE_EMULATOR_HOST: ${{ secrets.FIRESTORE_EMULATOR_HOST }}
+                  FIREBASE_STORAGE_EMULATOR_HOST: ${{ secrets.FIREBASE_STORAGE_EMULATOR_HOST }}
               working-directory: pid-be
               run: firebase emulators:exec "poetry run pytest"
 
             - name: Run notifications tests
               env:
                   ENV: ${{ secrets.ENV }}
+                  PORT: ${{ secrets.PORT }}
                   MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
                   MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
                   MAIL_FROM: ${{ secrets.MAIL_FROM }}
