@@ -375,6 +375,16 @@ def update_specialty_value(
     specialty_update_value_request: SpecialtyUpdateValueRequest,
     uid=Depends(Auth.is_admin),
 ):
+    """
+    Update specialtie's value.
+
+    This will allow superusers to modify the value of a given specialty.
+
+    This path operation will:
+
+    * Update a specific specialties value.
+    * Throw an error if the update fails.
+    """
     Specialty.update_value(specialty_name, specialty_update_value_request.value)
     return {"message": "Successfull update"}
 
