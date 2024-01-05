@@ -79,7 +79,7 @@ async def approve_physician(physician_id: str, uid=Depends(Auth.is_admin)):
         Admin.approve_physician(physician_id)
         physician = Physician.get_by_id(physician_id)
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "PHYSICIAN_APPROVED_ACCOUNT",
                 "data": {
@@ -127,7 +127,7 @@ async def deny_physician(physician_id: str, uid=Depends(Auth.is_admin)):
         physician = Physician.get_by_id(physician_id)
         Admin.deny_physician(physician_id)
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "PHYSICIAN_DENIED_ACCOUNT",
                 "data": {
@@ -176,7 +176,7 @@ async def unblock_physician(physician_id: str, uid=Depends(Auth.is_admin)):
         physician = Physician.get_blocked_by_id(physician_id)
         Admin.unblock_physician(physician)
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "PHYSICIAN_UNBLOCKED_ACCOUNT",
                 "data": {
@@ -375,6 +375,16 @@ def update_specialty_value(
     specialty_update_value_request: SpecialtyUpdateValueRequest,
     uid=Depends(Auth.is_admin),
 ):
+    """
+    Update specialtie's value.
+
+    This will allow superusers to modify the value of a given specialty.
+
+    This path operation will:
+
+    * Update a specific specialties value.
+    * Throw an error if the update fails.
+    """
     Specialty.update_value(specialty_name, specialty_update_value_request.value)
     return {"message": "Successfull update"}
 

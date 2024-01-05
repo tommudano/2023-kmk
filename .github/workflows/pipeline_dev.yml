@@ -39,6 +39,8 @@ jobs:
             - name: Run emualtors and backend tests
               env:
                   ENV: ${{ secrets.ENV }}
+                  PORT: ${{ secrets.PORT_CORE }}
+                  NOTIFICATIONS_API_URL: ${{ secrets.NOTIFICATIONS_API_URL }}
                   REGISTER_URL: ${{ secrets.REGISTER_URL }}
                   LOGIN_URL: ${{ secrets.LOGIN_URL }}
                   PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -60,6 +62,7 @@ jobs:
             - name: Run notifications tests
               env:
                   ENV: ${{ secrets.ENV }}
+                  PORT: ${{ secrets.PORT_NOTIFICATIONS }}
                   MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
                   MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
                   MAIL_FROM: ${{ secrets.MAIL_FROM }}
