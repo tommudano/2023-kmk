@@ -254,6 +254,7 @@ const Admin = () => {
                                                 handleDenyPhysician={
                                                     handleDenyPhysician
                                                 }
+                                                key={doctor.id}
                                             />
                                         ))}
                                     </div>
@@ -292,6 +293,7 @@ const Admin = () => {
                                                 handleDenyPhysician={
                                                     handleDenyPhysician
                                                 }
+                                                key={doctor.id}
                                             />
                                         ))}
                                     </div>
@@ -331,6 +333,7 @@ const Admin = () => {
                                                     handleUnblockPhysician
                                                 }
                                                 approveButtonText='Desbloquear'
+                                                key={doctor.id}
                                             />
                                         ))}
                                     </div>
