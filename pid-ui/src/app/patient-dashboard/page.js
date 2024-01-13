@@ -424,6 +424,7 @@ const DashboardPatient = () => {
                                         {/* ... */}
                                         {appointments.map((appointment) => (
                                             <PatientsAppointment
+                                                key={appointment.id}
                                                 appointment={appointment}
                                                 handleDeleteClick={
                                                     handleDeleteClick
@@ -482,6 +483,7 @@ const DashboardPatient = () => {
                                                     handleOpenRatingModal={
                                                         handleOpenRatingModal
                                                     }
+                                                    key={appointment.id}
                                                 />
                                             )
                                         )}

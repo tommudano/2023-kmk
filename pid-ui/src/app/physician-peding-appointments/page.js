@@ -259,6 +259,7 @@ const PhysicianPendingAppointments = () => {
                                                 handleOpenRatingModal={
                                                     handleOpenRatingModal
                                                 }
+                                                key={appointment.id}
                                             />
                                         ))}
                                     </div>

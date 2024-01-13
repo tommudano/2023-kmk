@@ -570,6 +570,7 @@ const PhysicianAgenda = () => {
                                                 handleOpenRatingModal={
                                                     handleOpenRatingModal
                                                 }
+                                                key={appointment.id}
                                             />
                                         ))}
                                     </div>
