@@ -3,6 +3,8 @@ name: CI/CD Pipeline
 on:
     pull_request:
         types: [opened, reopened, synchronize, edited]
+    push:
+        branches: ["dev", "main"]
 
 jobs:
     test-backend:
