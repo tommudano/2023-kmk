@@ -159,7 +159,7 @@ if __name__ == "__main__":
     db.collection("records").document(a_patient_information["id"]).set(record_data)
 
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        db.collection("specialties").document().set({"name": specialty, "value": 3000})
 
     for blood_type in blood_types:
         db.collection("blood_types").document().set({"type": blood_type})

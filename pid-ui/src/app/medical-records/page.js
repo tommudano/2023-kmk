@@ -12,7 +12,6 @@ const MedicalRecords = ({ searchParams }) => {
     const [isLoading, setIsLoading] = useState(true);
     const apiURL = process.env.NEXT_PUBLIC_API_URL;
     const [urlSearchParams, setUrlSearchParams] = useState(null);
-    const [physicianScores, setPatientScores] = useState([]);
     const [patientId, setPatientId] = useState(
         searchParams.patientId || urlSearchParams.get("patientId")
     );
@@ -35,45 +34,6 @@ const MedicalRecords = ({ searchParams }) => {
         if (window)
             setUrlSearchParams(new URLSearchParams(window.location.search));
     }, []);
-
-    const getPatientScores = async (id) => {
-        try {
-            const response = await axios.get(`${apiURL}users/score/${id}`, {
-                httpsAgent: agent,
-            });
-            console.log(response.data.score_metrics);
-
-            let tempReviews = [
-                { id: 1, type: "Puntualidad", rating: 0 },
-                { id: 2, type: "Comunicacion", rating: 0 },
-                { id: 3, type: "Asistencia", rating: 0 },
-                { id: 4, type: "Trato", rating: 0 },
-                { id: 5, type: "Limpieza", rating: 0 },
-            ];
-
-            tempReviews[0].rating = response.data.score_metrics.puntuality;
-            tempReviews[1].rating = response.data.score_metrics.comunication;
-            tempReviews[2].rating = response.data.score_metrics.attendance;
-            tempReviews[3].rating = response.data.score_metrics.treat;
-            tempReviews[4].rating = response.data.score_metrics.cleanliness;
-
-            if (
-                tempReviews[0].rating +
-                    tempReviews[1].rating +
-                    tempReviews[2].rating +
-                    tempReviews[3].rating +
-                    tempReviews[4].rating ==
-                0
-            ) {
-                setPatientScores([]);
-            } else {
-                setPatientScores(tempReviews);
-            }
-        } catch (error) {
-            toast.error("Error al obtener los puntajes");
-            console.error(error);
-        }
-    };
 
     const fetchData = async () => {
         try {
@@ -114,7 +74,6 @@ const MedicalRecords = ({ searchParams }) => {
             axios.defaults.headers.common = {
                 Authorization: `bearer ${localStorage.getItem("token")}`,
             };
-            getPatientScores(patientId);
             fetchData();
             fetchMyAnalysis().then(() => setIsLoading(false));
         }
@@ -124,7 +83,7 @@ const MedicalRecords = ({ searchParams }) => {
         <div className={styles.dashboard}>
             <PhysicianTabBar />
 
-            <Header role="physician" />
+            <Header role='physician' />
             {isLoading ? (
                 <p>Cargando...</p>
             ) : (
@@ -135,8 +94,8 @@ const MedicalRecords = ({ searchParams }) => {
                                 Paciente: {record.name} {record.last_name}
                             </div>
                             <Image
-                                src="/refresh_icon.png"
-                                alt="Refrescar"
+                                src='/refresh_icon.png'
+                                alt='Refrescar'
                                 className={styles["refresh-icon"]}
                                 width={200}
                                 height={200}
@@ -154,68 +113,6 @@ const MedicalRecords = ({ searchParams }) => {
                             </div>
                             <div className={styles["subtitle"]}>
                                 Grupo sanguíneo: {record.blood_type}
-                            </div>
-
-                            <div
-                                key={physicianScores.key}
-                                className={styles["reviews-container"]}
-                            >
-                                {physicianScores.length > 0 ? (
-                                    <>
-                                        {physicianScores.map((review) => (
-                                            <div
-                                                key={review.id}
-                                                className={styles["review"]}
-                                            >
-                                                <div
-                                                    className={
-                                                        styles[
-                                                            "review-cards-container"
-                                                        ]
-                                                    }
-                                                >
-                                                    <div
-                                                        className={
-                                                            styles[
-                                                                "review-card"
-                                                            ]
-                                                        }
-                                                    >
-                                                        <div
-                                                            className={
-                                                                styles[
-                                                                    "review-card-title"
-                                                                ]
-                                                            }
-                                                        >
-                                                            {review.type}
-                                                        </div>
-                                                        <div
-                                                            className={
-                                                                styles[
-                                                                    "review-card-content"
-                                                                ]
-                                                            }
-                                                        >
-                                                            {review.rating}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </>
-                                ) : (
-                                    // If there are no reviews, display the message
-                                    <div
-                                        style={{
-                                            fontSize: "20px",
-                                            paddingLeft: "1rem",
-                                            marginBottom: "1rem",
-                                        }}
-                                    >
-                                        No hay reviews
-                                    </div>
-                                )}
                             </div>
 
                             <div className={styles["my-estudios-section"]}>
@@ -252,8 +149,8 @@ const MedicalRecords = ({ searchParams }) => {
                                                             ) + "..."}
                                                         </div>
                                                         <Image
-                                                            src="/document.png"
-                                                            alt=""
+                                                            src='/document.png'
+                                                            alt=''
                                                             className={
                                                                 styles[
                                                                     "document-icon"
@@ -313,6 +210,7 @@ const MedicalRecords = ({ searchParams }) => {
                                     <>
                                         {record.observations.map(
                                             (observation, index) => {
+                                                console.log(observation);
                                                 return (
                                                     <div
                                                         className={
@@ -331,8 +229,9 @@ const MedicalRecords = ({ searchParams }) => {
                                                         >
                                                             Observacion del{" "}
                                                             {new Date(
-                                                                observation.appointment_date *
-                                                                    1000
+                                                                Number(
+                                                                    observation.real_start_time
+                                                                ) * 1000
                                                             ).toLocaleDateString(
                                                                 "es-AR"
                                                             )}{" "}

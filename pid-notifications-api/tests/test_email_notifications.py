@@ -1,6 +1,3 @@
-import pytest
-import requests
-from datetime import datetime
 from .config import *
 from app.models.entities.TemplateHandler import TemplateHandler
 from app.main import app
@@ -25,7 +22,7 @@ date_data = {"day": 20, "month": 3, "year": 2023, "hour": 10, "minute": 30}
 
 def test_email_sending_endpoint_sends_returns_a_200_code():
     response_from_email_sending = client.post(
-        "http://localhost:9000/emails/send",
+        "/emails/send",
         json={"type": "PATIENT_REGISTERED_ACCOUNT", "data": physician_account_data},
     )
 

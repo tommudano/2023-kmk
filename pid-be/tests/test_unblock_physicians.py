@@ -154,6 +154,14 @@ def log_in_initial_admin_user(create_initial_admin_and_then_delete_him):
     yield
 
 
+@pytest.fixture(scope="module", autouse=True)
+def delete_unblocked_physicians(log_in_initial_admin_user):
+    yield
+    physician_docs = db.collection("physicians").list_documents()
+    for physician_doc in physician_docs:
+        physician_doc.delete()
+
+
 def test_unblock_physician_endpoint_returns_a_200_code():
     mocked_response = requests.Response()
     mocked_response.status_code = 200

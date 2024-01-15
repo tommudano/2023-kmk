@@ -1,25 +1,12 @@
 name: CI/CD Pipeline
 
-env:
-    VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-    VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
 on:
     pull_request:
         types: [opened, reopened, synchronize, edited]
+    push:
+        branches: ["dev", "main"]
 
 jobs:
-    build-and-deploy-frontend-preview:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - name: Install Vercel CLI
-              run: npm install --global vercel@latest
-            - name: Pull Vercel Environment Information
-              run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-            - name: Build Project Artifacts
-              run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
     test-backend:
         runs-on: ubuntu-latest
 
@@ -53,6 +40,8 @@ jobs:
             - name: Run emulators and backend tests
               env:
                   ENV: ${{ secrets.ENV }}
+                  PORT: ${{ secrets.PORT_CORE }}
+                  NOTIFICATIONS_API_URL: ${{ secrets.NOTIFICATIONS_API_URL }}
                   REGISTER_URL: ${{ secrets.REGISTER_URL }}
                   LOGIN_URL: ${{ secrets.LOGIN_URL }}
                   PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -75,6 +64,7 @@ jobs:
             - name: Run notifications tests
               env:
                   ENV: ${{ secrets.ENV }}
+                  PORT: ${{ secrets.PORT_NOTIFICATIONS }}
                   MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
                   MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
                   MAIL_FROM: ${{ secrets.MAIL_FROM }}

@@ -10,6 +10,8 @@ import https from "https";
 import { Header, Footer, PhysicianTabBar } from "../components/header";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { toast } from "react-toastify";
+import PhysiciansAppointment from "../components/PhysiciansAppointment";
+import Modal from "react-modal";
 
 const PhysicianPendingAppointments = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -18,10 +20,53 @@ const PhysicianPendingAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [appointmentIdToDeny, setAppointmentIdToDeny] = useState(null);
+    const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+    const [patientScores, setPatientScores] = useState([]);
+    const [buttonsDisabledSetter, setButtonsDisabledSetter] = useState(
+        () => {}
+    );
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
     });
+
+    const getPatientScores = async (id) => {
+        try {
+            const response = await axios.get(`${apiURL}users/score/${id}`, {
+                httpsAgent: agent,
+            });
+            console.log(response.data.score_metrics);
+
+            let tempReviews = [
+                { id: 1, type: "Puntualidad", rating: 0 },
+                { id: 2, type: "Asistencia", rating: 0 },
+                { id: 3, type: "Limpieza", rating: 0 },
+                { id: 4, type: "Trato", rating: 0 },
+                { id: 5, type: "Comunicacion", rating: 0 },
+            ];
+
+            tempReviews[0].rating = response.data.score_metrics.puntuality;
+            tempReviews[1].rating = response.data.score_metrics.attendance;
+            tempReviews[2].rating = response.data.score_metrics.cleanliness;
+            tempReviews[3].rating = response.data.score_metrics.treat;
+            tempReviews[4].rating = response.data.score_metrics.communication;
+
+            setPatientScores([...tempReviews]);
+        } catch (error) {
+            toast.error("Error al obtener los puntajes");
+            console.error(error);
+        }
+    };
+
+    const handleOpenRatingModal = (patientId) => {
+        getPatientScores(patientId);
+        setIsRatingModalOpen(true);
+    };
+
+    const handleCloseRatingModal = () => {
+        setPatientScores([]);
+        setIsRatingModalOpen(false);
+    };
 
     const fetchAppointments = async () => {
         try {
@@ -37,8 +82,12 @@ const PhysicianPendingAppointments = () => {
         }
     };
 
-    const handleApproveAppointment = async (appointmentId) => {
+    const handleApproveAppointment = async (
+        appointmentId,
+        setButtonsDisabled
+    ) => {
         console.log(appointmentId);
+        setButtonsDisabled(true);
         toast.info("Aprobando turno...");
         try {
             await axios.post(
@@ -49,14 +98,17 @@ const PhysicianPendingAppointments = () => {
         } catch (error) {
             console.log(error);
         }
+        setButtonsDisabled(false);
     };
 
-    const handleDenyClick = (appointmentId) => {
+    const handleDenyClick = (appointmentId, setButtonsDisabled) => {
+        setButtonsDisabledSetter(() => setButtonsDisabled);
         setAppointmentIdToDeny(appointmentId);
         setShowModal(true);
-    }; 
+    };
 
     const handleDenyAppointment = async () => {
+        buttonsDisabledSetter(true);
         setShowModal(false);
         toast.info("Rechazando turno...");
         try {
@@ -69,6 +121,7 @@ const PhysicianPendingAppointments = () => {
             console.log(error);
             toast.error("Error al rechazar turno");
         }
+        buttonsDisabledSetter(false);
     };
 
     useEffect(() => {
@@ -83,11 +136,91 @@ const PhysicianPendingAppointments = () => {
             });
     }, []);
 
+    const ratingModalStyles = {
+        content: {
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -30%)",
+            width: "80%",
+        },
+    };
+
     return (
         <div className={styles.dashboard}>
+            {isRatingModalOpen && (
+                <Modal
+                    ariaHideApp={false}
+                    isOpen={isRatingModalOpen}
+                    onRequestClose={handleCloseRatingModal}
+                    style={ratingModalStyles}
+                    contentLabel='Example Modal'
+                >
+                    <div
+                        key={patientScores.key}
+                        className={styles["reviews-container"]}
+                    >
+                        {patientScores.length > 0 ? (
+                            <>
+                                {patientScores.map((review) => (
+                                    <div
+                                        key={review.id}
+                                        className={styles["review"]}
+                                    >
+                                        <div
+                                            className={
+                                                styles["review-cards-container"]
+                                            }
+                                        >
+                                            <div
+                                                className={
+                                                    styles["review-card"]
+                                                }
+                                            >
+                                                <div
+                                                    className={
+                                                        styles[
+                                                            "review-card-title"
+                                                        ]
+                                                    }
+                                                >
+                                                    {review.type}
+                                                </div>
+                                                <div
+                                                    className={
+                                                        styles[
+                                                            "review-card-content"
+                                                        ]
+                                                    }
+                                                >
+                                                    {review.rating}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            // If there are no reviews, display the message
+                            <label>No hay reviews</label>
+                        )}
+                    </div>
+
+                    {/* Botones de Guardar y Cerrar */}
+                    <button
+                        className={styles["standard-button"]}
+                        onClick={() => handleCloseRatingModal()}
+                    >
+                        Cerrar
+                    </button>
+                </Modal>
+            )}
+
             <PhysicianTabBar highlight={"TurnosPorAprobar"} />
 
-            <Header role="physician" />
+            <Header role='physician' />
 
             {isLoading ? (
                 <p>Cargando...</p>
@@ -99,8 +232,8 @@ const PhysicianPendingAppointments = () => {
                                 Turnos solicitados sin confirmar
                             </div>
                             <Image
-                                src="/refresh_icon.png"
-                                alt="Notificaciones"
+                                src='/refresh_icon.png'
+                                alt='Notificaciones'
                                 className={styles["refresh-icon"]}
                                 width={200}
                                 height={200}
@@ -115,68 +248,19 @@ const PhysicianPendingAppointments = () => {
                                     <div>
                                         {/* ... */}
                                         {appointments.map((appointment) => (
-                                            <div
-                                                key={appointment.id}
-                                                className={
-                                                    styles["appointment"]
+                                            <PhysiciansAppointment
+                                                appointment={appointment}
+                                                handleApproveAppointment={
+                                                    handleApproveAppointment
                                                 }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles["subtitle"]
-                                                    }
-                                                >
-                                                    Paciente:{" "}
-                                                    {appointment.patient
-                                                        .first_name +
-                                                        " " +
-                                                        appointment.patient
-                                                            .last_name}
-                                                </div>
-                                                <p>
-                                                    Fecha y hora:{" "}
-                                                    {new Date(
-                                                        appointment.date * 1000
-                                                    ).toLocaleString("es-AR")}
-                                                </p>
-                                                <div
-                                                    className={
-                                                        styles[
-                                                            "appointment-buttons-container"
-                                                        ]
-                                                    }
-                                                >
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "approve-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleApproveAppointment(
-                                                                appointment.id
-                                                            )
-                                                        }
-                                                    >
-                                                        Confirmar{" "}
-                                                    </button>
-
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "delete-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleDenyClick(
-                                                                appointment.id
-                                                            )
-                                                        }
-                                                    >
-                                                        Rechazar
-                                                    </button>
-                                                </div>
-                                            </div>
+                                                handleDenyClick={
+                                                    handleDenyClick
+                                                }
+                                                handleOpenRatingModal={
+                                                    handleOpenRatingModal
+                                                }
+                                                key={appointment.id}
+                                            />
                                         ))}
                                     </div>
                                 ) : (
@@ -189,11 +273,11 @@ const PhysicianPendingAppointments = () => {
                             </div>
                             {/* Modal de confirmación */}
                             <ConfirmationModal
-                                    isOpen={showModal}
-                                    closeModal={() => setShowModal(false)}
-                                    confirmAction={handleDenyAppointment}
-                                    message="¿Estás seguro de que deseas rechazar este turno?"
-                                /> 
+                                isOpen={showModal}
+                                closeModal={() => setShowModal(false)}
+                                confirmAction={handleDenyAppointment}
+                                message='¿Estás seguro de que deseas rechazar este turno?'
+                            />
                         </div>
                     </div>
 

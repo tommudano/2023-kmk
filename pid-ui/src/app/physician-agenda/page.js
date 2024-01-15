@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import styles from "../styles/styles.module.css";
 import "react-datepicker/dist/react-datepicker.css";
 import Modal from "react-modal";
@@ -12,6 +11,10 @@ import { Header, Footer, PhysicianTabBar } from "../components/header";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { redirect } from "../components/userCheck";
 import { toast } from "react-toastify";
+import InfoIcon from "@mui/icons-material/Info";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import PhysiciansAppointment from "../components/PhysiciansAppointment";
 
 const PhysicianAgenda = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +29,11 @@ const PhysicianAgenda = () => {
     const [appointmentToClose, setAppointmentToClose] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [appointmentIdToDelete, setAppointmentIdToDelete] = useState(null);
+    const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+    const [patientScores, setPatientScores] = useState([]);
+    const [buttonsDisabledSetter, setButtonsDisabledSetter] = useState(
+        () => {}
+    );
     const [disabledCloseAppointmentButton, setDisabledCloseAppointmentButton] =
         useState(false);
 
@@ -56,6 +64,44 @@ const PhysicianAgenda = () => {
         rejectUnauthorized: false,
     });
 
+    const getPatientScores = async (id) => {
+        try {
+            const response = await axios.get(`${apiURL}users/score/${id}`, {
+                httpsAgent: agent,
+            });
+            console.log(response.data.score_metrics);
+
+            let tempReviews = [
+                { id: 1, type: "Puntualidad", rating: 0 },
+                { id: 2, type: "Asistencia", rating: 0 },
+                { id: 3, type: "Limpieza", rating: 0 },
+                { id: 4, type: "Trato", rating: 0 },
+                { id: 5, type: "Comunicacion", rating: 0 },
+            ];
+
+            tempReviews[0].rating = response.data.score_metrics.puntuality;
+            tempReviews[1].rating = response.data.score_metrics.attendance;
+            tempReviews[2].rating = response.data.score_metrics.cleanliness;
+            tempReviews[3].rating = response.data.score_metrics.treat;
+            tempReviews[4].rating = response.data.score_metrics.communication;
+
+            setPatientScores([...tempReviews]);
+        } catch (error) {
+            toast.error("Error al obtener los puntajes");
+            console.error(error);
+        }
+    };
+
+    const handleOpenRatingModal = (patientId) => {
+        getPatientScores(patientId);
+        setIsRatingModalOpen(true);
+    };
+
+    const handleCloseRatingModal = () => {
+        setPatientScores([]);
+        setIsRatingModalOpen(false);
+    };
+
     const fetchAppointments = async () => {
         try {
             const response = await axios.get(
@@ -73,20 +119,25 @@ const PhysicianAgenda = () => {
         }
     };
 
-    const handleOpenAppointmentClosureModal = (appointment) => {
+    const handleOpenAppointmentClosureModal = (
+        appointment,
+        setButtonsDisabled
+    ) => {
+        setButtonsDisabledSetter(() => setButtonsDisabled);
         setIsAddObervationModalOpen(true);
         setAppointmentToClose(appointment);
         setPatientId(appointment.patient.id);
     };
 
     const handleAppointmentClosure = async () => {
+        buttonsDisabledSetter(true);
         setDisabledCloseAppointmentButton(true);
         console.log(appointmentToClose.id);
         console.log(appointmentAttended);
         console.log(startTime);
         let hour = startTime.split(":")[0];
         let minutes = startTime.split(":")[1];
-        let date = new Date(appointmentToClose.date * 1000);
+        let date = new Date();
         date.setHours(hour);
         date.setMinutes(minutes);
         console.log((date.getTime() / 1000).toString());
@@ -150,14 +201,17 @@ const PhysicianAgenda = () => {
             console.error(error);
         }
         setDisabledCloseAppointmentButton(false);
+        buttonsDisabledSetter(false);
     };
 
-    const handleDeleteClick = (appointmentId) => {
+    const handleDeleteClick = (appointmentId, setDisabledButtons) => {
+        setButtonsDisabledSetter(() => setDisabledButtons);
         setAppointmentIdToDelete(appointmentId);
         setShowModal(true);
     };
 
     const handleDeleteAppointment = async () => {
+        buttonsDisabledSetter(true);
         setShowModal(false);
         toast.info("Eliminando turno...");
         try {
@@ -174,31 +228,7 @@ const PhysicianAgenda = () => {
             console.error(error);
             toast.error("Error al eliminar turno");
         }
-    };
-
-    const MODAL_STYLES = {
-        top: "50%",
-        left: "50%",
-        right: "auto",
-        bottom: "auto",
-        marginRight: "-50%",
-        transform: "translate(-50%, -50%)",
-        width: "80%",
-        marginTop: "6rem",
-    };
-
-    const OVERLAY_STYLE = {
-        position: "fixed",
-        display: "flex",
-        justifyContent: "center",
-        top: "0",
-        left: "0",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0,0,0, .8)",
-        zIndex: "1000",
-        overflowY: "auto",
-        marginTop: "6rem",
+        buttonsDisabledSetter(false);
     };
 
     const handleCloseEditModal = () => {
@@ -216,14 +246,98 @@ const PhysicianAgenda = () => {
             });
     }, []);
 
+    const ratingModalStyles = {
+        content: {
+            top: "50%",
+            left: "50%",
+            right: "auto",
+            bottom: "auto",
+            marginRight: "-50%",
+            transform: "translate(-50%, -30%)",
+            width: "80%",
+        },
+    };
+
     return (
         <div className={styles.dashboard}>
+            {isRatingModalOpen && (
+                <Modal
+                    ariaHideApp={false}
+                    isOpen={isRatingModalOpen}
+                    onRequestClose={handleCloseRatingModal}
+                    style={ratingModalStyles}
+                    contentLabel='Example Modal'
+                >
+                    <div
+                        key={patientScores.key}
+                        className={styles["reviews-container"]}
+                    >
+                        {patientScores.length > 0 ? (
+                            <>
+                                {patientScores.map((review) => (
+                                    <div
+                                        key={review.id}
+                                        className={styles["review"]}
+                                    >
+                                        <div
+                                            className={
+                                                styles["review-cards-container"]
+                                            }
+                                        >
+                                            <div
+                                                className={
+                                                    styles["review-card"]
+                                                }
+                                            >
+                                                <div
+                                                    className={
+                                                        styles[
+                                                            "review-card-title"
+                                                        ]
+                                                    }
+                                                >
+                                                    {review.type}
+                                                </div>
+                                                <div
+                                                    className={
+                                                        styles[
+                                                            "review-card-content"
+                                                        ]
+                                                    }
+                                                >
+                                                    {review.rating}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            // If there are no reviews, display the message
+                            <label>No hay reviews</label>
+                        )}
+                    </div>
+
+                    {/* Botones de Guardar y Cerrar */}
+                    <button
+                        className={styles["standard-button"]}
+                        onClick={() => handleCloseRatingModal()}
+                    >
+                        Cerrar
+                    </button>
+                </Modal>
+            )}
             {isAddObservationModalOpen && (
                 <Modal
                     ariaHideApp={false}
                     isOpen={isAddObservationModalOpen}
                     onRequestClose={handleCloseEditModal}
-                    // style={customStyles}
+                    style={{
+                        content: {
+                            height: "70%",
+                            transform: "translate(0px, 30%)",
+                        },
+                    }}
                 >
                     <div
                         className={styles["new-record-section"]}
@@ -239,8 +353,9 @@ const PhysicianAgenda = () => {
                                 name='attended'
                                 id='attended'
                                 onChange={(e) => {
-                                    console.log(e.target.value);
-                                    setAppointmentAttended(e.target.value);
+                                    setAppointmentAttended(
+                                        e.target.value === "true"
+                                    );
                                 }}
                             >
                                 <option value={true}>Si</option>
@@ -259,10 +374,10 @@ const PhysicianAgenda = () => {
                                     setStartTime(date.target.value.toString());
                                     console.log(date.target.value.toString());
                                 }}
-                                disabled={appointmentAttended == "false"}
-                                required
+                                disabled={appointmentAttended === false}
+                                required={appointmentAttended === true}
                                 className={`${
-                                    appointmentAttended == "false"
+                                    appointmentAttended === false
                                         ? styles["disabled-input"]
                                         : ""
                                 }`}
@@ -280,14 +395,14 @@ const PhysicianAgenda = () => {
                                     setNewObservationContent(e.target.value);
                                 }}
                                 placeholder='Escribe una nueva observación'
-                                required
+                                required={appointmentAttended === true}
                                 className={`${styles["observation-input"]} ${
-                                    appointmentAttended === "false"
+                                    appointmentAttended === false
                                         ? styles["disabled-input"]
                                         : ""
                                 }`}
                                 wrap='soft'
-                                disabled={appointmentAttended == "false"}
+                                disabled={appointmentAttended === false}
                             />
                         </div>
 
@@ -385,16 +500,18 @@ const PhysicianAgenda = () => {
 
                         <button
                             className={`${styles["edit-button"]} ${
-                                !newObservationContent ||
-                                !startTime ||
+                                (!newObservationContent &&
+                                    appointmentAttended === true) ||
+                                (!startTime && appointmentAttended === true) ||
                                 disabledCloseAppointmentButton
                                     ? styles["disabled-button"]
                                     : ""
                             }`}
                             onClick={handleAppointmentClosure}
                             disabled={
-                                !newObservationContent ||
-                                !startTime ||
+                                (!newObservationContent &&
+                                    appointmentAttended === true) ||
+                                (!startTime && appointmentAttended === true) ||
                                 disabledCloseAppointmentButton
                             }
                         >
@@ -404,7 +521,7 @@ const PhysicianAgenda = () => {
                 </Modal>
             )}
 
-            <PhysicianTabBar highlight={"TurnosDelDia"} />
+            <PhysicianTabBar highlight={"TurnosActivos"} />
 
             <Header role='physician' />
 
@@ -415,7 +532,15 @@ const PhysicianAgenda = () => {
                     <div className={styles["tab-content"]}>
                         <div className={styles.form}>
                             <div className={styles["title"]}>
-                                Mis Proximos Turnos
+                                Turnos Activos
+                                <Tooltip
+                                    title='En este panel se mostraran los turnos activos; estos son turnos que aun no han sido iniciados o que no han sido cerrados.'
+                                    placement='right'
+                                >
+                                    <IconButton>
+                                        <InfoIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </div>
                             <Image
                                 src='/refresh_icon.png'
@@ -434,87 +559,19 @@ const PhysicianAgenda = () => {
                                     <div>
                                         {/* ... */}
                                         {appointments.map((appointment) => (
-                                            <div
-                                                key={appointment.id}
-                                                className={
-                                                    styles["appointment"]
+                                            <PhysiciansAppointment
+                                                appointment={appointment}
+                                                handleDeleteClick={
+                                                    handleDeleteClick
                                                 }
-                                            >
-                                                <div
-                                                    className={
-                                                        styles["subtitle"]
-                                                    }
-                                                >
-                                                    Paciente:{" "}
-                                                    {appointment.patient
-                                                        .first_name +
-                                                        " " +
-                                                        appointment.patient
-                                                            .last_name}
-                                                </div>
-                                                <p>
-                                                    Fecha y hora:
-                                                    {new Date(
-                                                        appointment.date * 1000
-                                                    ).toLocaleString("es-AR")}
-                                                </p>
-                                                <div
-                                                    className={
-                                                        styles[
-                                                            "appointment-buttons-container"
-                                                        ]
-                                                    }
-                                                >
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "standard-button"
-                                                            ]
-                                                        }
-                                                        onClick={() => {
-                                                            handleOpenAppointmentClosureModal(
-                                                                appointment
-                                                            );
-                                                        }}
-                                                    >
-                                                        Finalizar Turno
-                                                    </button>
-                                                    <Link
-                                                        href={{
-                                                            pathname:
-                                                                "/medical-records?patientId",
-                                                            query: appointment
-                                                                .patient.id,
-                                                        }}
-                                                        as={`medical-records?patientId=${appointment.patient.id}`}
-                                                    >
-                                                        <button
-                                                            className={
-                                                                styles[
-                                                                    "standard-button"
-                                                                ]
-                                                            }
-                                                        >
-                                                            Ver Historia Clinica
-                                                        </button>
-                                                    </Link>
-
-                                                    <button
-                                                        className={
-                                                            styles[
-                                                                "delete-button"
-                                                            ]
-                                                        }
-                                                        onClick={() =>
-                                                            handleDeleteClick(
-                                                                appointment.id
-                                                            )
-                                                        }
-                                                    >
-                                                        Cancelar
-                                                    </button>
-                                                </div>
-                                            </div>
+                                                handleOpenAppointmentClosureModal={
+                                                    handleOpenAppointmentClosureModal
+                                                }
+                                                handleOpenRatingModal={
+                                                    handleOpenRatingModal
+                                                }
+                                                key={appointment.id}
+                                            />
                                         ))}
                                     </div>
                                 ) : (

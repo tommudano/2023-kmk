@@ -1,4 +1,5 @@
 import time
+import os
 import requests
 from datetime import datetime
 from firebase_admin import firestore
@@ -60,6 +61,23 @@ class Appointment:
             db.collection("appointments")
             .where("patient_id", "==", uid)
             .where("status", "==", "approved")
+            .order_by("date")
+            .get()
+        )
+
+        return [appointment.to_dict() for appointment in appointments]
+
+    @staticmethod
+    def get_all_pending_appointments_for_patient_with(uid):
+        if not Patient.is_patient(uid):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only patients can access this resource",
+            )
+        appointments = (
+            db.collection("appointments")
+            .where("patient_id", "==", uid)
+            .where("status", "==", "pending")
             .order_by("date")
             .get()
         )
@@ -137,6 +155,7 @@ class Appointment:
             db.collection("appointments")
             .where("physician_id", "==", id)
             .where("status", "==", "pending")
+            .order_by("date")
             .get()
         )
         return [appointment.to_dict() for appointment in appointments]
@@ -173,6 +192,23 @@ class Appointment:
         return [appointment.to_dict() for appointment in appointments]
 
     @staticmethod
+    def get_all_rated_appointments_for_patient_with(uid):
+        if not Patient.is_patient(uid):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only patients can access this resource",
+            )
+        appointments = (
+            db.collection("appointments")
+            .where("patient_id", "==", uid)
+            .where("status", "==", "rated")
+            .order_by("date")
+            .get()
+        )
+
+        return [appointment.to_dict() for appointment in appointments]
+
+    @staticmethod
     def get_all_closed_appointments_for_physician_with(uid):
         if not Physician.is_physician(uid):
             raise HTTPException(
@@ -188,7 +224,7 @@ class Appointment:
         )
 
         return [appointment.to_dict() for appointment in appointments]
-    
+
     @staticmethod
     def get_all_rated_appointments_for_physician_with(uid):
         if not Physician.is_physician(uid):
@@ -242,7 +278,7 @@ class Appointment:
         if Patient.has_pending_scores(self.patient_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Patient has pending appointments to score",
+                detail="El paciente tiene turnos pendientes por puntuar",
             )
         id = db.collection("appointments").document().id
         db.collection("appointments").document(id).set(
@@ -264,7 +300,7 @@ class Appointment:
         patient = Patient.get_by_id(self.patient_id)
         date = datetime.fromtimestamp(self.date)
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "CANCELED_APPOINTMENT_DUE_TO_PHYSICIAN_DENIAL",
                 "data": {

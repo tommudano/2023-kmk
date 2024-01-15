@@ -14,6 +14,7 @@ const UserProfile = () => {
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
     const apiURL = process.env.NEXT_PUBLIC_API_URL;
+    const [physicianScores, setPhysicianScores] = useState([]);
     const [user, setUser] = useState({
         firstName: "",
         lastName: "",
@@ -43,6 +44,35 @@ const UserProfile = () => {
         rejectUnauthorized: false,
     });
 
+    const getPhysicianScores = async (id) => {
+        try {
+            const response = await axios.get(`${apiURL}users/score/${id}`, {
+                httpsAgent: agent,
+            });
+            console.log(response.data.score_metrics);
+
+            let reviews = [
+                { id: 1, type: "Puntualidad" },
+                { id: 2, type: "Atencion" },
+                { id: 3, type: "Limpieza" },
+                { id: 4, type: "Disponibilidad" },
+                { id: 5, type: "Precio" },
+                { id: 6, type: "Comunicacion" },
+            ];
+
+            reviews[0].rating = response.data.score_metrics.puntuality;
+            reviews[1].rating = response.data.score_metrics.attention;
+            reviews[2].rating = response.data.score_metrics.cleanliness;
+            reviews[3].rating = response.data.score_metrics.availability;
+            reviews[4].rating = response.data.score_metrics.price;
+            reviews[5].rating = response.data.score_metrics.communication;
+            setPhysicianScores([...reviews]);
+        } catch (error) {
+            toast.error("Error al obtener los puntajes");
+            console.error(error);
+        }
+    };
+
     const getUserData = async () => {
         try {
             const response = await axios.get(`${apiURL}users/user-info`, {
@@ -53,8 +83,9 @@ const UserProfile = () => {
                 firstName: response.data.first_name,
                 lastName: response.data.last_name,
                 email: response.data.email,
-                bloodtype: response.data.blood_type,
                 agenda: user.agenda,
+                id: response.data.id,
+                specialty: response.data.specialty,
             };
 
             response.data.agenda.working_hours.forEach((element) => {
@@ -69,6 +100,7 @@ const UserProfile = () => {
             console.log(userData);
 
             setUser(userData);
+            getPhysicianScores(userData.id);
         } catch (error) {
             console.error(error);
             toast.error("Error al obtener los datos del usuario");
@@ -241,6 +273,7 @@ const UserProfile = () => {
     const handleTab1 = () => setActiveSubTab("tab1");
     const handleTab2 = () => setActiveSubTab("tab2");
     const handleTab3 = () => setActiveSubTab("tab3");
+    const handleTab4 = () => setActiveSubTab("tab4");
 
     useEffect(() => {
         getUserData()
@@ -298,6 +331,16 @@ const UserProfile = () => {
                                 >
                                     Cambiar contrase&ntilde;a
                                 </li>
+                                <li
+                                    className={`${subTabStyles.subTabElement} ${
+                                        activeSubTab === "tab4"
+                                            ? subTabStyles.activeSubTabElement
+                                            : subTabStyles.inactiveSubTabElement
+                                    }`}
+                                    onClick={handleTab4}
+                                >
+                                    Mi Puntaje
+                                </li>
                             </ul>
                         </div>
 
@@ -314,6 +357,9 @@ const UserProfile = () => {
                                         id='firstName'
                                         value={user.firstName}
                                         readOnly
+                                        className={
+                                            styles["disabled-input-info"]
+                                        }
                                     />
                                 </div>
                                 <div className={styles["form-group"]}>
@@ -323,9 +369,11 @@ const UserProfile = () => {
                                         id='lastName'
                                         value={user.lastName}
                                         readOnly
+                                        className={
+                                            styles["disabled-input-info"]
+                                        }
                                     />
                                 </div>
-
                                 <div className={styles["form-group"]}>
                                     <label htmlFor='email'>
                                         Correo Electrónico:
@@ -335,8 +383,28 @@ const UserProfile = () => {
                                         id='email'
                                         value={user.email}
                                         readOnly
+                                        className={
+                                            styles["disabled-input-info"]
+                                        }
                                     />
                                 </div>
+                                <div className={styles["form-group"]}>
+                                    <label htmlFor='email'>Especialidad:</label>
+                                    <input
+                                        type='email'
+                                        id='email'
+                                        value={
+                                            user.specialty
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                            user.specialty.slice(1)
+                                        }
+                                        readOnly
+                                        className={
+                                            styles["disabled-input-info"]
+                                        }
+                                    />
+                                </div>{" "}
                             </div>
                         ) : null}
 
@@ -507,6 +575,63 @@ const UserProfile = () => {
                                     Cambiar Contraseña
                                 </button>
                             </form>
+                        ) : null}
+
+                        {activeSubTab === "tab4" ? (
+                            physicianScores.length > 0 ? (
+                                <>
+                                    {physicianScores.map((review) => (
+                                        <div
+                                            key={review.id}
+                                            className={styles["review"]}
+                                        >
+                                            <div
+                                                className={
+                                                    styles[
+                                                        "review-cards-container"
+                                                    ]
+                                                }
+                                            >
+                                                <div
+                                                    className={
+                                                        styles["review-card"]
+                                                    }
+                                                >
+                                                    <div
+                                                        className={
+                                                            styles[
+                                                                "review-card-title"
+                                                            ]
+                                                        }
+                                                    >
+                                                        {review.type}
+                                                    </div>
+                                                    <div
+                                                        className={
+                                                            styles[
+                                                                "review-card-content"
+                                                            ]
+                                                        }
+                                                    >
+                                                        {review.rating}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </>
+                            ) : (
+                                // If there are no reviews, display the message
+                                <div
+                                    style={{
+                                        fontSize: "20px",
+                                        paddingLeft: "1rem",
+                                        marginBottom: "1rem",
+                                    }}
+                                >
+                                    No hay reviews
+                                </div>
+                            )
                         ) : null}
                     </div>
                     <Footer />

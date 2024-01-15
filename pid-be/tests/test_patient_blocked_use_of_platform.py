@@ -230,7 +230,7 @@ def test_patient_taking_an_appointment_with_pending_scoring_returns_400_code_and
     assert appointment_creation_response.status_code == 400
     assert (
         appointment_creation_response.json()["detail"]
-        == "Patient has pending appointments to score"
+        == "El paciente tiene turnos pendientes por puntuar"
     )
 
 

@@ -33,13 +33,18 @@ class MetricParserHelper:
 
     @staticmethod
     def filter_appointments_per_specialty(appointments):
-        specialties = Specialty.get_all()
+        specialties = Specialty.get_all_names()
         appointments_per_specialty = {}
         for specialty in specialties:
             appointments_per_specialty[specialty] = 0
         for appointment in appointments:
             appointments_physician = Physician.get_by_id(appointment["physician_id"])
-            if appointments_per_specialty.get(appointments_physician["specialty"]) != None:
+            if (
+                appointments_per_specialty.get(appointments_physician["specialty"])
+                != None
+            ):
                 appointments_per_specialty[appointments_physician["specialty"]] += 1
-        filtered_appointments_per_specialty = {k: v for k, v in appointments_per_specialty.items() if v > 0}
+        filtered_appointments_per_specialty = {
+            k: v for k, v in appointments_per_specialty.items() if v > 0
+        }
         return filtered_appointments_per_specialty

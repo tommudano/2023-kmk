@@ -144,29 +144,28 @@ async def register(
     * If the user is a patient, it's record will be created.
     * Throw an error if registration fails.
     """
-
-    url = os.environ.get("REGISTER_URL")
-    auth_uid = None
     try:
-        user = auth.get_user_by_email(register_request.email)
-        auth_uid = user.uid
+        auth.get_user_by_email(register_request.email)
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Esta cuenta ya fue registrada"},
+        )
     except:
         print("[+] User doesnt exist in authentication")
 
-    if not auth_uid:
-        try:
-            register_response = auth.create_user(
-                **{
-                    "email": register_request.email,
-                    "password": register_request.password,
-                }
-            )
-            auth_uid = register_response.uid
-        except:
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"detail": "Internal Server Error"},
-            )
+    try:
+        register_response = auth.create_user(
+            **{
+                "email": register_request.email,
+                "password": register_request.password,
+            }
+        )
+        auth_uid = register_response.uid
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal Server Error"},
+        )
 
     del register_request.password
     if register_request.role == "patient":
@@ -190,7 +189,7 @@ async def register(
         )
         physician.create()
     requests.post(
-        "http://localhost:9000/emails/send",
+        os.environ.get("NOTIFICATIONS_API_URL"),
         json={
             "type": "PATIENT_REGISTERED_ACCOUNT"
             if register_request.role == "patient"
@@ -337,7 +336,7 @@ def change_password(
     if login_response.status_code == 200:
         auth.update_user(uid, **{"password": change_password_request.new_password})
         requests.post(
-            "http://localhost:9000/emails/send",
+            os.environ.get("NOTIFICATIONS_API_URL"),
             json={
                 "type": "PASSWORD_CHANGED",
                 "data": {
@@ -419,7 +418,7 @@ def show_score(
     """
     try:
         if Patient.is_patient(user_id):
-            appointments = Appointment.get_all_closed_appointments_for_patient_with(
+            appointments = Appointment.get_all_rated_appointments_for_patient_with(
                 user_id
             )
             score_sums = {
