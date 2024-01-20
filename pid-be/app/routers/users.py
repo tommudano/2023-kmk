@@ -90,7 +90,7 @@ async def login_user(
             "password": user_login_request.password,
             "return_secure_token": True,
         },
-        params={"key": os.environ.key("API_KEY")},
+        params={"key": os.environ.get("API_KEY")},
     )
     if login_response.status_code == 400:
         return JSONResponse(
