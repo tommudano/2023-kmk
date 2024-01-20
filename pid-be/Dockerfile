@@ -34,7 +34,6 @@ WORKDIR $PYSETUP_PATH
 COPY poetry.lock pyproject.toml ./
 COPY ./tests ./tests
 COPY ./app ./app
-COPY ./credentials ./credentials
 RUN poetry install --no-dev --no-root
 
 WORKDIR $PYSETUP_PATH

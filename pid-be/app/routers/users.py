@@ -56,9 +56,6 @@ router = APIRouter(
     prefix="/users", tags=["Users"], responses={404: {"description": "Not found"}}
 )
 
-with open("credentials/client.json") as fp:
-    firebase_client_config = json.loads(fp.read())
-
 
 @router.post(
     "/login",
@@ -93,7 +90,7 @@ async def login_user(
             "password": user_login_request.password,
             "return_secure_token": True,
         },
-        params={"key": firebase_client_config["apiKey"]},
+        params={"key": os.environ.get("API_KEY")},
     )
     if login_response.status_code == 400:
         return JSONResponse(
@@ -331,7 +328,7 @@ def change_password(
             "email": user.email,
             "password": change_password_request.current_password,
         },
-        params={"key": firebase_client_config["apiKey"]},
+        params={"key": os.environ.get("apiKey")},
     )
     if login_response.status_code == 200:
         auth.update_user(uid, **{"password": change_password_request.new_password})

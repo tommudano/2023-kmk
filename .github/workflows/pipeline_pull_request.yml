@@ -41,6 +41,8 @@ jobs:
               env:
                   ENV: ${{ secrets.ENV }}
                   PORT: ${{ secrets.PORT_CORE }}
+                  API_KEY: ${{ secrets.API_KEY }}
+                  STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
                   NOTIFICATIONS_API_URL: ${{ secrets.NOTIFICATIONS_API_URL }}
                   REGISTER_URL: ${{ secrets.REGISTER_URL }}
                   LOGIN_URL: ${{ secrets.LOGIN_URL }}

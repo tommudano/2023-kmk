@@ -24,5 +24,5 @@ def initialize_firebase_app():
         }
     )
     initialize_app(
-        credentials_to_use, {"storageBucket": "hardy-portal-409615.appspot.com"}
+        credentials_to_use, {"storageBucket": os.environ.get("STORAGE_BUCKET")}
     )
