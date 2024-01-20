@@ -43,9 +43,6 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-with open("credentials/client.json") as fp:
-    firebase_client_config = json.loads(fp.read())
-
 
 @router.post(
     "/approve-physician/{physician_id}",
@@ -327,7 +324,7 @@ def regsiter_admin(
             "password": admin_resgister_request.password,
             "returnSecureToken": True,
         },
-        params={"key": firebase_client_config["apiKey"]},
+        params={"key": os.environ.get("API_KEY")},
     )
     if register_response.status_code != 200:
         return JSONResponse(

@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Back end del sistema de gestion medica KMK"
 authors = ["tommudano <mudano.tomas@gmail.com>", "FelicitasKlix <felikpc@gmail.com>", "aguskrembs <agustin.krembs@gmail.com>"]
 
-packages = [{ include = "app" }, { include = "tests" }, { include = "credentials" }]
+packages = [{ include = "app" }, { include = "tests" }]
 
 [tool.poetry.scripts]
 start = "app.main:start"
