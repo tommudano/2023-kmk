@@ -328,7 +328,7 @@ def change_password(
             "email": user.email,
             "password": change_password_request.current_password,
         },
-        params={"key": firebase_client_config["apiKey"]},
+        params={"key": os.environ.get("apiKey")},
     )
     if login_response.status_code == 200:
         auth.update_user(uid, **{"password": change_password_request.new_password})
