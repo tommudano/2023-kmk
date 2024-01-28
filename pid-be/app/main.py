@@ -99,9 +99,6 @@ def start():
             "app.main:app",
             host="0.0.0.0",
             port=CTX_PORT,
-            reload=True,
-            ssl_keyfile="/etc/ssl/key.pem",
-            ssl_certfile="/etc/ssl/cert.pem",
         )
     else:
         uvicorn.run("app.main:app", host="0.0.0.0", port=CTX_PORT, reload=True)
