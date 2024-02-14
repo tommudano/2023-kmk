@@ -40,11 +40,13 @@ router = APIRouter(
         500: {"model": GetPhysiciansError},
     },
 )
-def get_physicians_by_specialty(specialty_name: str, uid=Depends(Auth.is_logged_in)):
+def get_approved_physicians_by_specialty(
+    specialty_name: str, uid=Depends(Auth.is_logged_in)
+):
     """
-    Get all physicians by location.
+    Get approved physicians by specialty.
 
-    This will allow authenticated users to retrieve all physicians that are specialized in chosen specialty.
+    This will allow authenticated users to retrieve all approved physicians that are specialized in chosen specialty.
 
     This path operation will:
 
@@ -52,7 +54,7 @@ def get_physicians_by_specialty(specialty_name: str, uid=Depends(Auth.is_logged_
     * Throw an error if physician retrieving fails.
     """
     try:
-        physicians = Physician.get_by_specialty(specialty_name)
+        physicians = Physician.get_approved_by_specialty(specialty_name)
         return {"physicians": physicians}
     except:
         return JSONResponse(
@@ -99,9 +101,11 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
         requests.post(
             os.environ.get("NOTIFICATIONS_API_URL"),
             json={
-                "type": "APPROVED_APPOINTMENT"
-                if not appointment.updated_at
-                else "APPROVED_UPDATED_APPOINTMENT",
+                "type": (
+                    "APPROVED_APPOINTMENT"
+                    if not appointment.updated_at
+                    else "APPROVED_UPDATED_APPOINTMENT"
+                ),
                 "data": {
                     "physician_first_name": physician["first_name"],
                     "physician_last_name": physician["last_name"],

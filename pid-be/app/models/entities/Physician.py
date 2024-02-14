@@ -7,7 +7,7 @@ db = firestore.client()
 
 class Physician:
     role: str
-    name: str
+    first_name: str
     last_name: str
     tuition: str
     specialty: str
@@ -18,7 +18,7 @@ class Physician:
     def __init__(
         self,
         role: str,
-        name: str,
+        first_name: str,
         last_name: str,
         tuition: str,
         specialty: str,
@@ -27,7 +27,7 @@ class Physician:
         approved: str = "pending",
     ):
         self.role = role
-        self.name = name
+        self.first_name = first_name
         self.last_name = last_name
         self.tuition = tuition
         self.specialty = specialty.lower()
@@ -44,18 +44,18 @@ class Physician:
         return db.collection("deniedPhysicians").document(id).get().to_dict()
 
     @staticmethod
-    def get_by_specialty(specialty_name):
+    def get_approved_by_specialty(specialty_name):
         physicians = (
             db.collection("physicians")
             .where("specialty", "==", specialty_name)
             .where("approved", "==", "approved")
             .get()
         )
-        physiciansList = [physician.to_dict() for physician in physicians]
+        physiciansList = [Physician(**physician.to_dict()) for physician in physicians]
         return sorted(
             physiciansList,
-            key=lambda physician: physician["first_name"].lower()
-            + physician["last_name"].lower(),
+            key=lambda physician: physician.first_name.lower()
+            + physician.last_name.lower(),
         )
 
     @staticmethod
@@ -164,7 +164,7 @@ class Physician:
         db.collection("physicians").document(self.id).set(
             {
                 "id": self.id,
-                "first_name": self.name,
+                "first_name": self.first_name,
                 "last_name": self.last_name,
                 "tuition": self.tuition,
                 "specialty": self.specialty,
