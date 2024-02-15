@@ -188,9 +188,11 @@ async def register(
     requests.post(
         os.environ.get("NOTIFICATIONS_API_URL"),
         json={
-            "type": "PATIENT_REGISTERED_ACCOUNT"
-            if register_request.role == "patient"
-            else "PHYSICIAN_REGISTERED_ACCOUNT",
+            "type": (
+                "PATIENT_REGISTERED_ACCOUNT"
+                if register_request.role == "patient"
+                else "PHYSICIAN_REGISTERED_ACCOUNT"
+            ),
             "data": {
                 "name": register_request.name,
                 "last_name": register_request.last_name,

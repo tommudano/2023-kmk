@@ -17,9 +17,11 @@ class PhysicianResponse(BaseModel):
         data["agenda"] = AgendaResponse(
             **{
                 "agenda": data["agenda"],
-                "appointments": list(data["appointments"].keys())
-                if data.get("appointments")
-                else [],
+                "appointments": (
+                    list(data["appointments"].keys())
+                    if data.get("appointments")
+                    else []
+                ),
             }
         ).model_dump()
         super().__init__(**data)

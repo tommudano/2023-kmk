@@ -14,6 +14,7 @@ class Physician:
     email: str
     id: str
     approved: str
+    agenda: dict
 
     def __init__(
         self,
@@ -24,6 +25,7 @@ class Physician:
         specialty: str,
         email: str,
         id: str,
+        agenda: dict,
         approved: str = "pending",
     ):
         self.role = role
@@ -33,6 +35,7 @@ class Physician:
         self.specialty = specialty.lower()
         self.email = email
         self.id = id
+        self.agenda = agenda
         self.approved = approved
 
     @staticmethod
@@ -51,11 +54,13 @@ class Physician:
             .where("approved", "==", "approved")
             .get()
         )
-        physiciansList = [Physician(**physician.to_dict()) for physician in physicians]
+        physiciansList = [
+            Physician(**physician.to_dict()).__dict__ for physician in physicians
+        ]
         return sorted(
             physiciansList,
-            key=lambda physician: physician.first_name.lower()
-            + physician.last_name.lower(),
+            key=lambda physician: physician["first_name"].lower()
+            + physician["last_name"].lower(),
         )
 
     @staticmethod

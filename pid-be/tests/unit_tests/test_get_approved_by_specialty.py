@@ -19,6 +19,7 @@ class test_physician_db_object:
             "email": "test@email.com",
             "id": "123456789",
             "approved": "approved",
+            "agenda": {"1": {"start": 8, "finish": 18.5}},
         }
 
 
@@ -50,11 +51,8 @@ def test_function_returns_list_of_physicians(mock_get):
     physicians_list = Physician.get_approved_by_specialty("cardiologia")
     assert type(physicians_list) == list
     assert len(physicians_list) == 1
-    assert type(physicians_list[0]) == Physician
-    assert (
-        physicians_list[0].__dict__
-        == Physician(**test_physician_obj.to_dict()).__dict__
-    )
+    assert type(physicians_list[0]) == dict
+    assert physicians_list[0] == Physician(**test_physician_obj.to_dict()).__dict__
 
 
 @patch("app.models.entities.Physician.db.collection")
@@ -77,18 +75,14 @@ def test_function_returns_sorted_by_full_name_list_of_physicians(mock_get):
     physicians_list = Physician.get_approved_by_specialty("cardiologia")
     assert len(physicians_list) == 4
     assert (
-        physicians_list[0].__dict__
-        == Physician(**third_test_physician_obj.to_dict()).__dict__
+        physicians_list[0] == Physician(**third_test_physician_obj.to_dict()).__dict__
     )
     assert (
-        physicians_list[1].__dict__
-        == Physician(**fourth_test_physician_obj.to_dict()).__dict__
+        physicians_list[1] == Physician(**fourth_test_physician_obj.to_dict()).__dict__
     )
     assert (
-        physicians_list[2].__dict__
-        == Physician(**first_test_physician_obj.to_dict()).__dict__
+        physicians_list[2] == Physician(**first_test_physician_obj.to_dict()).__dict__
     )
     assert (
-        physicians_list[3].__dict__
-        == Physician(**second_test_physician_obj.to_dict()).__dict__
+        physicians_list[3] == Physician(**second_test_physician_obj.to_dict()).__dict__
     )

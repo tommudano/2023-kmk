@@ -56,7 +56,8 @@ def get_approved_physicians_by_specialty(
     try:
         physicians = Physician.get_approved_by_specialty(specialty_name)
         return {"physicians": physicians}
-    except:
+    except Exception as e:
+        # print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
