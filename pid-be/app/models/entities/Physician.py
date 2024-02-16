@@ -15,6 +15,7 @@ class Physician:
     id: str
     approved: str
     agenda: dict
+    appointments: list
 
     def __init__(
         self,
@@ -27,6 +28,7 @@ class Physician:
         id: str,
         agenda: dict,
         approved: str = "pending",
+        appointments: dict = {},
     ):
         self.role = role
         self.first_name = first_name
@@ -37,14 +39,19 @@ class Physician:
         self.id = id
         self.agenda = agenda
         self.approved = approved
+        self.appointments = appointments
 
     @staticmethod
     def get_by_id(id):
-        return db.collection("physicians").document(id).get().to_dict()
+        physician_document = db.collection("physicians").document(id).get().to_dict()
+        return Physician(**physician_document)
 
     @staticmethod
     def get_blocked_by_id(id):
-        return db.collection("deniedPhysicians").document(id).get().to_dict()
+        blocked_physician_document = (
+            db.collection("deniedPhysicians").document(id).get().to_dict()
+        )
+        return Physician(**blocked_physician_document)
 
     @staticmethod
     def get_approved_by_specialty(specialty_name):
@@ -63,9 +70,7 @@ class Physician:
             + physician["last_name"].lower(),
         )
 
-    @staticmethod
-    def has_availability(id, date):
-        physician_doc = db.collection("physicians").document(id).get().to_dict()
+    def has_availability(self, date):
         day_of_week_of_appointment = str(
             datetime.fromtimestamp(date).date().strftime("%w")
         )
@@ -73,22 +78,20 @@ class Physician:
             datetime.fromtimestamp(date).hour + datetime.fromtimestamp(date).minute / 60
         )
 
-        if not physician_doc["agenda"].get(day_of_week_of_appointment):
+        if not self.agenda.get(str(day_of_week_of_appointment)):
             return False
 
-        if physician_doc.get("appointments") and physician_doc["appointments"].get(
-            str(date)
-        ):
+        if self.appointments and self.appointments.get(str(date)):
             return False
 
         appointment_begins_after_shift_starts = (
             precise_start_hour_of_appointment
-            >= physician_doc["agenda"][day_of_week_of_appointment]["start"]
+            >= self.agenda[day_of_week_of_appointment]["start"]
         )
 
         appointment_finishes_before_shift_ends = (
             precise_start_hour_of_appointment + 0.5
-            <= physician_doc["agenda"][day_of_week_of_appointment]["finish"]
+            <= self.agenda[day_of_week_of_appointment]["finish"]
         )
 
         return (

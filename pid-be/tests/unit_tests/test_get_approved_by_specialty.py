@@ -4,7 +4,7 @@ from app.main import app
 from app.models.entities.Physician import Physician
 
 
-class test_physician_db_object:
+class Test_physician_db_object:
     def __init__(self, first_name, last_name):
         self.first_name = first_name
         self.last_name = last_name
@@ -27,7 +27,7 @@ class test_physician_db_object:
 def test_function_calls_db(mock_get):
     specialty_name = "cardiologia"
     mock_response = Mock()
-    response = [test_physician_db_object("test", "test")]
+    response = [Test_physician_db_object("test", "test")]
 
     mock_response.where().where().get.return_value = response
     mock_get.return_value = mock_response
@@ -41,7 +41,7 @@ def test_function_calls_db(mock_get):
 
 @patch("app.models.entities.Physician.db.collection")
 def test_function_returns_list_of_physicians(mock_get):
-    test_physician_obj = test_physician_db_object("test", "test")
+    test_physician_obj = Test_physician_db_object("test", "test")
     mock_response = Mock()
     response = [test_physician_obj]
 
@@ -57,10 +57,10 @@ def test_function_returns_list_of_physicians(mock_get):
 
 @patch("app.models.entities.Physician.db.collection")
 def test_function_returns_sorted_by_full_name_list_of_physicians(mock_get):
-    first_test_physician_obj = test_physician_db_object("Test", "Test")
-    second_test_physician_obj = test_physician_db_object("test", "test")
-    third_test_physician_obj = test_physician_db_object("a name", "test")
-    fourth_test_physician_obj = test_physician_db_object("test", "A last name")
+    first_test_physician_obj = Test_physician_db_object("Test", "Test")
+    second_test_physician_obj = Test_physician_db_object("test", "test")
+    third_test_physician_obj = Test_physician_db_object("a name", "test")
+    fourth_test_physician_obj = Test_physician_db_object("test", "A last name")
     mock_response = Mock()
     response = [
         first_test_physician_obj,
