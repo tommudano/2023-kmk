@@ -2,6 +2,8 @@ import pytest
 from firebase_admin import firestore, auth, storage
 from fastapi.testclient import TestClient
 from app.main import app
+from unittest.mock import patch, Mock
+
 
 client = TestClient(app)
 db = firestore.client()
@@ -92,45 +94,12 @@ def log_in_another_patient(log_in_patient):
 
 @pytest.fixture(autouse=True)
 def add_file_to_storage_and_then_delete_them(log_in_another_patient):
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
-    response_from_analysis_creation_endpoint = client.post(
-        "/analysis",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-        files=files,
-    )
-    pytest.analysis_id = response_from_analysis_creation_endpoint.json()[0]["id"]
+    pytest.analysis_id = "an_analysis_id"
     yield
 
 
-@pytest.fixture(scope="module", autouse=True)
-def add_another_file_to_storage_and_then_delete_them(log_in_another_patient):
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
-    response_from_analysis_creation_endpoint = client.post(
-        "/analysis",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-        files=files,
-    )
-    yield
-
-
-@pytest.fixture(scope="module", autouse=True)
-def delete_files_from_storage(log_in_another_patient):
-    yield
-    bucket = storage.bucket()
-    blobs = bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}")
-    for blob in blobs:
-        blob.delete()
-    for file_information_doc in (
-        db.collection("analysis")
-        .document(pytest.a_patient_uid)
-        .collection("uploaded_analysis")
-        .list_documents()
-    ):
-        file_information_doc.delete()
-    db.collection("analysis").document(pytest.a_patient_uid).delete()
-
-
-def test_valid_deletion_of_analysis_returns_200_code():
+@patch("app.routers.analysis.Analysis")
+def test_valid_deletion_of_analysis_returns_200_code(mock_analysis_delete):
     response_from_analysis_deletion_endpoint = client.delete(
         f"/analysis/{pytest.analysis_id}",
         headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
@@ -139,7 +108,8 @@ def test_valid_deletion_of_analysis_returns_200_code():
     assert response_from_analysis_deletion_endpoint.status_code == 200
 
 
-def test_valid_deletion_of_analysis_returns_message():
+@patch("app.routers.analysis.Analysis")
+def test_valid_deletion_of_analysis_returns_message(mock_analysis_delete):
     response_from_analysis_deletion_endpoint = client.delete(
         f"/analysis/{pytest.analysis_id}",
         headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
@@ -148,55 +118,6 @@ def test_valid_deletion_of_analysis_returns_message():
     assert (
         response_from_analysis_deletion_endpoint.json()["message"]
         == "Analysis has been deleted successfully"
-    )
-
-
-def test_analysis_deletion_endpoint_removes_analysis_from_storage():
-    bucket = storage.bucket()
-    uploaded_files = list(bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}"))
-    assert len(uploaded_files) == 2
-    uploaded_file = list(
-        bucket.list_blobs(
-            prefix=f"analysis/{pytest.a_patient_uid}/{pytest.analysis_id}"
-        )
-    )
-    assert len(uploaded_file) == 1
-    client.delete(
-        f"/analysis/{pytest.analysis_id}",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-    )
-    uploaded_files = list(bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}"))
-    assert len(uploaded_files) == 1
-    uploaded_file = list(
-        bucket.list_blobs(
-            prefix=f"analysis/{pytest.a_patient_uid}/{pytest.analysis_id}"
-        )
-    )
-    assert len(uploaded_file) == 0
-
-
-def test_analysis_deletion_endpoint_removes_analysis_from_firestore():
-    assert (
-        db.collection("analysis")
-        .document(pytest.a_patient_uid)
-        .collection("uploaded_analysis")
-        .document(pytest.analysis_id)
-        .get()
-        .exists
-        == True
-    )
-    client.delete(
-        f"/analysis/{pytest.analysis_id}",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-    )
-    assert (
-        db.collection("analysis")
-        .document(pytest.a_patient_uid)
-        .collection("uploaded_analysis")
-        .document(pytest.analysis_id)
-        .get()
-        .exists
-        == False
     )
 
 

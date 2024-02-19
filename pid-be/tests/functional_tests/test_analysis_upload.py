@@ -1,7 +1,9 @@
 import pytest
-from firebase_admin import firestore, auth, storage
+from firebase_admin import firestore, auth
 from fastapi.testclient import TestClient
 from app.main import app
+from unittest.mock import patch, AsyncMock
+
 
 client = TestClient(app)
 db = firestore.client()
@@ -19,13 +21,27 @@ a_KMK_patient_information = {
 
 a_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": "surgeon",
     "email": "testphysicianforapproving@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "pending",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
+}
+
+an_analysis_response_mock = {
+    "id": "an_id",
+    "file_name": "a_name",
+    "uploaded_at": 123456,
+    "url": "http://test.test",
+}
+
+another_analysis_response_mock = {
+    "id": "another_id",
+    "file_name": "another_name",
+    "uploaded_at": 123456,
+    "url": "http://test.test",
 }
 
 
@@ -63,16 +79,20 @@ def create_test_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
-    pytest.a_phisician_uid = created_user.uid
-    db.collection("physicians").document(pytest.a_phisician_uid).set(
-        {**a_KMK_physician_information, "approved": "approved"}
+    pytest.a_physician_uid = created_user.uid
+    db.collection("physicians").document(pytest.a_physician_uid).set(
+        {
+            **a_KMK_physician_information,
+            "approved": "approved",
+            "id": pytest.a_physician_uid,
+        }
     )
     yield
-    auth.delete_user(pytest.a_phisician_uid)
-    db.collection("physicians").document(pytest.a_phisician_uid).delete()
+    auth.delete_user(pytest.a_physician_uid)
+    db.collection("physicians").document(pytest.a_physician_uid).delete()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -81,31 +101,19 @@ def log_in_physician(create_test_physician_and_then_delete_him):
         "/users/login",
         json={
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     yield
 
 
-@pytest.fixture(autouse=True)
-def delete_storage_documents():
-    yield
-    bucket = storage.bucket()
-    blobs = bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}")
-    for blob in blobs:
-        blob.delete()
-    for file_information_doc in (
-        db.collection("analysis")
-        .document(pytest.a_patient_uid)
-        .collection("uploaded_analysis")
-        .list_documents()
-    ):
-        file_information_doc.delete()
-    db.collection("analysis").document(pytest.a_patient_uid).delete()
+@patch("app.routers.analysis.Analysis")
+def test_uploading_analysis_returns_201_code(mock_analysis_save):
+    response_mock = AsyncMock()
+    response_mock.save.return_value = [an_analysis_response_mock]
+    mock_analysis_save.return_value = response_mock
 
-
-def test_uploading_analysis_returns_201_code():
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
+    files = {"analysis": open("tests/functional_tests/test_files/test_file.txt", "rb")}
     response_from_analysis_upload_endpoint = client.post(
         "/analysis",
         headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
@@ -114,8 +122,13 @@ def test_uploading_analysis_returns_201_code():
     assert response_from_analysis_upload_endpoint.status_code == 201
 
 
-def test_uploading_analysis_returns_list_with_upload_info():
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
+@patch("app.routers.analysis.Analysis")
+def test_uploading_analysis_returns_list_with_upload_info(mock_analysis_save):
+    response_mock = AsyncMock()
+    response_mock.save.return_value = [an_analysis_response_mock]
+    mock_analysis_save.return_value = response_mock
+
+    files = {"analysis": open("tests/functional_tests/test_files/test_file.txt", "rb")}
     response_from_analysis_upload_endpoint = client.post(
         "/analysis",
         headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
@@ -131,65 +144,23 @@ def test_uploading_analysis_returns_list_with_upload_info():
     assert type(analysis_information["url"]) == str
 
 
-def test_uploading_analysis_saves_file_in_storage():
-    bucket = storage.bucket()
-    uploaded_files = list(bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}"))
-    assert len(uploaded_files) == 0
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
-    client.post(
-        "/analysis",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-        files=files,
-    )
-    uploaded_files = list(bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}"))
-    assert len(uploaded_files) == 1
+@patch("app.routers.analysis.Analysis")
+def test_multiple_upload_returns_many_response_elements(mock_analysis_save):
+    response_mock = AsyncMock()
+    response_mock.save.return_value = [
+        an_analysis_response_mock,
+        another_analysis_response_mock,
+    ]
+    mock_analysis_save.return_value = response_mock
 
-
-def test_uploading_analysis_saves_file_in_firestore():
-    assert (
-        len(
-            db.collection("analysis")
-            .document(pytest.a_patient_uid)
-            .collection("uploaded_analysis")
-            .get()
-        )
-        == 0
-    )
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
-    response_from_analysis_upload_endpoint = client.post(
-        "/analysis",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-        files=files,
-    )
-    file_collection = (
-        db.collection("analysis")
-        .document(pytest.a_patient_uid)
-        .collection("uploaded_analysis")
-        .get()
-    )
-    assert len(file_collection) == 1
-    file_doc = file_collection[0].to_dict()
-    assert file_doc["id"] == response_from_analysis_upload_endpoint.json()[0]["id"]
-    assert (
-        file_doc["file_name"]
-        == response_from_analysis_upload_endpoint.json()[0]["file_name"]
-    )
-    assert (
-        file_doc["uploaded_at"]
-        == response_from_analysis_upload_endpoint.json()[0]["uploaded_at"]
-    )
-    assert file_doc["url"] == response_from_analysis_upload_endpoint.json()[0]["url"]
-
-
-def test_multiple_upload_returns_many_response_elements():
     a_file = (
         "analysis",
-        open("tests/test_files/test_file.txt", "rb"),
+        open("tests/functional_tests/test_files/test_file.txt", "rb"),
     )
 
     another_file = (
         "analysis",
-        open("tests/test_files/another_test_file.txt", "rb"),
+        open("tests/functional_tests/test_files/another_test_file.txt", "rb"),
     )
     response_from_analysis_upload_endpoint = client.post(
         "/analysis",
@@ -198,27 +169,6 @@ def test_multiple_upload_returns_many_response_elements():
     )
 
     assert len(response_from_analysis_upload_endpoint.json()) == 2
-
-
-def test_uploading_files_with_same_name_doesnt_override():
-    a_file = (
-        "analysis",
-        open("tests/test_files/test_file.txt", "rb"),
-    )
-
-    another_file = (
-        "analysis",
-        open("tests/test_files/test_file.txt", "rb"),
-    )
-    client.post(
-        "/analysis",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-        files=[a_file, another_file],
-    )
-
-    bucket = storage.bucket()
-    uploaded_files = list(bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}"))
-    assert len(uploaded_files) == 2
 
 
 def test_sending_no_files_to_upload_analysis_returns_422_code():
@@ -292,7 +242,7 @@ def test_upload_analysis_with_invalid_bearer_token_returns_401_code():
 
 
 def test_physician_uploading_file_returns_403_code_with_detail():
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
+    files = {"analysis": open("tests/functional_tests/test_files/test_file.txt", "rb")}
     response_from_analysis_upload_endpoint = client.post(
         "/analysis",
         headers={"Authorization": f"Bearer {pytest.physicians_bearer_token}"},

@@ -80,12 +80,13 @@ async def approve_physician(physician_id: str, uid=Depends(Auth.is_admin)):
             json={
                 "type": "PHYSICIAN_APPROVED_ACCOUNT",
                 "data": {
-                    "email": physician["email"],
+                    "email": physician.email,
                 },
             },
         )
         return {"message": "Physician validated successfully"}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -128,7 +129,7 @@ async def deny_physician(physician_id: str, uid=Depends(Auth.is_admin)):
             json={
                 "type": "PHYSICIAN_DENIED_ACCOUNT",
                 "data": {
-                    "email": physician["email"],
+                    "email": physician.email,
                 },
             },
         )
@@ -177,7 +178,7 @@ async def unblock_physician(physician_id: str, uid=Depends(Auth.is_admin)):
             json={
                 "type": "PHYSICIAN_UNBLOCKED_ACCOUNT",
                 "data": {
-                    "email": physician["email"],
+                    "email": physician.email,
                 },
             },
         )

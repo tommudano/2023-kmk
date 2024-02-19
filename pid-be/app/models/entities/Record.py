@@ -9,7 +9,7 @@ db = firestore.client()
 
 
 class Record:
-    name: str
+    first_name: str
     last_name: str
     birth_date: str
     gender: str
@@ -19,14 +19,14 @@ class Record:
 
     def __init__(
         self,
-        name: str,
+        first_name: str,
         last_name: str,
         birth_date: str,
         gender: str,
         blood_type: str,
         id: str,
     ):
-        self.name = name
+        self.first_name = first_name
         self.last_name = last_name
         self.birth_date = birth_date
         self.gender = gender
@@ -38,8 +38,10 @@ class Record:
     def add_observation(id, observation, uid):
         record_ref = db.collection("records").document(id)
         physician = Physician.get_by_id(uid)
-        observation["physician"] = physician["first_name"]+ " " + physician["last_name"]
-        observation["specialty"] =  physician["specialty"]
+        observation["physician"] = (
+            physician["first_name"] + " " + physician["last_name"]
+        )
+        observation["specialty"] = physician["specialty"]
         observation["observation"] = observation["observation"]
         observation["attended"] = observation["attended"]
         observation["real_start_time"] = observation["real_start_time"]
@@ -63,7 +65,7 @@ class Record:
         db.collection("records").document(self.id).set(
             {
                 "id": self.id,
-                "name": self.name,
+                "name": self.first_name,
                 "last_name": self.last_name,
                 "birth_date": self.birth_date,
                 "gender": self.gender,

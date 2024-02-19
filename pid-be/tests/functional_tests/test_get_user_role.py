@@ -114,6 +114,7 @@ def create_physician_and_then_delete_him(log_in_patient):
             "specialty": a_KMK_physician_information["specialty"],
             "tuition": a_KMK_physician_information["tuition"],
             "approved": "approved",
+            "role": "physician",
         }
     )
     yield

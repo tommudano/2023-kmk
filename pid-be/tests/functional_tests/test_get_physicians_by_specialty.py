@@ -4,6 +4,7 @@ from datetime import datetime
 from firebase_admin import firestore, auth
 from app.main import app
 from fastapi.testclient import TestClient
+import requests
 
 client = TestClient(app)
 
@@ -42,6 +43,7 @@ a_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "role": "physician",
 }
 
 another_physician_information = {
@@ -53,6 +55,7 @@ another_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "role": "physician",
 }
 
 other_physician_information = {
@@ -64,6 +67,7 @@ other_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "role": "physician",
 }
 
 pending_to_approve_physician_information = {
@@ -75,6 +79,7 @@ pending_to_approve_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "pending",
     "tuition": "A111",
+    "role": "physician",
 }
 
 denied_approve_physician_information = {
@@ -86,6 +91,7 @@ denied_approve_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "denied",
     "tuition": "A111",
+    "role": "physician",
 }
 
 
@@ -139,6 +145,7 @@ def test_valid_request_to_get_physicians_endpoint_returns_200_code():
             "password": a_KMK_user_information["password"],
         },
     )
+
     response_to_get_physicians_endpoint = client.get(
         f"/physicians/specialty/{specialties[0]}",
         headers={

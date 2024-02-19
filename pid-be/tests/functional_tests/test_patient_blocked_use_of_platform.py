@@ -1,12 +1,3 @@
-"""
-FLOW
----------
-1. Tenemos un paciente y un medico
-2. El paciente saca un turno con el medico
-3. El medico aprueba el turno
-4. El medico cierra el turno
-5. A partir del punto 4 el paciente no puede sacar turnos a menos que complete el turno
-"""
 import pytest
 import time
 from datetime import datetime, timedelta
@@ -105,6 +96,7 @@ def create_test_physician(create_another_test_user):
             "specialty": "surgeon",
             "approved": "approved",
             "tuition": "A111",
+            "role": "physician",
         }
     )
     yield

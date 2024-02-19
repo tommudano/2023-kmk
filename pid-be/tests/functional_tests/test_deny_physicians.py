@@ -1,4 +1,6 @@
 import pytest
+import time
+from datetime import datetime, timedelta
 from firebase_admin import firestore, auth
 from app.main import app
 from fastapi.testclient import TestClient
@@ -8,6 +10,9 @@ from unittest.mock import patch
 client = TestClient(app)
 
 db = firestore.client()
+
+today_date = datetime.fromtimestamp(round(time.time()))
+number_of_day_of_week = int(today_date.date().strftime("%w"))
 
 specialties = [
     "pediatrics",
@@ -25,29 +30,29 @@ specialties = [
 
 a_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianfordenial@kmk.com",
-    "password": "verySecurePassword123",
-    "approved": "denied",
+    "approved": "approved",
+    "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
 
 another_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 2",
+    "first_name": "Physician Test User Register 2",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianfordenial2@kmk.com",
-    "password": "verySecurePassword123",
-    "approved": "approved",
+    "approved": "pending",
+    "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
 
 a_KMK_patient_information = {
     "role": "patient",
-    "name": "Patient Test User Register",
+    "first_name": "Patient Test User Register",
     "last_name": "Test Last Name",
     "email": "testpatientfordenial@kmk.com",
     "password": "verySecurePassword123",
@@ -82,39 +87,54 @@ def create_patient_and_then_delete_him(load_and_delete_specialties):
     )
     pytest.a_patient_uid = created_user.uid
     db.collection("patients").document(pytest.a_patient_uid).set(
-        {**a_KMK_patient_information, "id": pytest.a_patient_uid}
+        a_KMK_patient_information
     )
     yield
     auth.delete_user(pytest.a_patient_uid)
     db.collection("patients").document(pytest.a_patient_uid).delete()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def login_patient(create_patient_and_then_delete_him):
+    response_from_login_endpoint_for_first_user = client.post(
+        "/users/login",
+        json={
+            "email": a_KMK_patient_information["email"],
+            "password": a_KMK_patient_information["password"],
+        },
+    )
+
+    pytest.first_bearer = response_from_login_endpoint_for_first_user.json()["token"]
+
+
 @pytest.fixture(autouse=True)
-def create_a_denied_physician_and_then_delete_him():
+def create_a_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.a_physician_uid = created_user.uid
-    db.collection("deniedPhysicians").document(pytest.a_physician_uid).set(
+    db.collection("physicians").document(pytest.a_physician_uid).set(
         {**a_KMK_physician_information, "id": pytest.a_physician_uid}
     )
     yield
     try:
         auth.delete_user(pytest.a_physician_uid)
-        db.collection("deniedPhysicians").document(pytest.a_physician_uid).delete()
+        db.collection("physicians").document(pytest.a_physician_uid).delete()
     except:
         print("[+] Physisican has not been created")
 
 
 @pytest.fixture(autouse=True)
-def create_another_denied_physician_and_then_delete_him():
+def create_another_physician_and_then_delete_him(
+    create_a_physician_and_then_delete_him,
+):
     created_user = auth.create_user(
         **{
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.another_physician_uid = created_user.uid
@@ -127,6 +147,27 @@ def create_another_denied_physician_and_then_delete_him():
         db.collection("physicians").document(pytest.another_physician_uid).delete()
     except:
         print("[+] Physisican has not been created")
+
+
+@pytest.fixture(autouse=True)
+def create_test_appointment(create_another_physician_and_then_delete_him):
+    next_week_day = today_date + timedelta(days=7)
+    next_week_day_first_block = next_week_day.replace(hour=9)
+    an_appointment_data = {
+        "date": round(next_week_day_first_block.timestamp()),
+        "physician_id": pytest.a_physician_uid,
+    }
+    mocked_response = requests.Response()
+    mocked_response.status_code = 200
+    with patch("requests.post", return_value=mocked_response) as mocked_request:
+        appointment_creation_response = client.post(
+            "/appointments",
+            json=an_appointment_data,
+            headers={"Authorization": f"Bearer {pytest.first_bearer}"},
+        )
+
+    pytest.appointment_id = appointment_creation_response.json()["appointment_id"]
+    yield
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -155,109 +196,109 @@ def log_in_initial_admin_user(create_initial_admin_and_then_delete_him):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def delete_unblocked_physicians(log_in_initial_admin_user):
+def delete_denied_physicians(log_in_initial_admin_user):
     yield
-    physician_docs = db.collection("physicians").list_documents()
-    for physician_doc in physician_docs:
-        physician_doc.delete()
+    denied_physicians_doc = db.collection("deniedPhysicians").list_documents()
+    for denied_physician_doc in denied_physicians_doc:
+        denied_physician_doc.delete()
 
 
-def test_unblock_physician_endpoint_returns_a_200_code():
+def test_deny_physician_endpoint_returns_a_200_code():
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
-        response_from_unblock_physician_endpoint = client.post(
-            f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        response_from_deny_physician_endpoint = client.post(
+            f"/admin/deny-physician/{pytest.a_physician_uid}",
             headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
         )
 
-    assert response_from_unblock_physician_endpoint.status_code == 200
+    assert response_from_deny_physician_endpoint.status_code == 200
 
 
-def test_unblock_physician_endpoint_returns_message():
+def test_deny_physician_endpoint_returns_message():
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
-        response_from_unblock_physician_endpoint = client.post(
-            f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        response_from_deny_physician_endpoint = client.post(
+            f"/admin/deny-physician/{pytest.a_physician_uid}",
             headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
         )
 
     assert (
-        response_from_unblock_physician_endpoint.json()["message"]
-        == "Physician unblocked successfully"
+        response_from_deny_physician_endpoint.json()["message"]
+        == "Physician denied successfully"
     )
 
 
-def test_unblock_physician_endpoint_removed_dennied_physician_record_from_firestore():
+def test_deny_physician_endpoint_updates_approved_field_in_firestore():
     assert (
-        db.collection("deniedPhysicians").document(pytest.a_physician_uid).get().exists
-        == True
-    )
-    mocked_response = requests.Response()
-    mocked_response.status_code = 200
-    with patch("requests.post", return_value=mocked_response) as mocked_request:
-        client.post(
-            f"/admin/unblock-physician/{pytest.a_physician_uid}",
-            headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
-        )
-    assert (
-        db.collection("deniedPhysicians").document(pytest.a_physician_uid).get().exists
-        == False
-    )
-
-
-def test_unblock_physician_endpoint_adds_physician_record_to_physicians_collection():
-    assert (
-        db.collection("physicians").document(pytest.a_physician_uid).get().exists
-        == False
+        db.collection("physicians")
+        .document(pytest.a_physician_uid)
+        .get()
+        .to_dict()["approved"]
+        == "approved"
     )
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
         client.post(
-            f"/admin/unblock-physician/{pytest.a_physician_uid}",
+            f"/admin/deny-physician/{pytest.a_physician_uid}",
+            headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
+        )
+    assert (
+        db.collection("deniedPhysicians")
+        .document(pytest.a_physician_uid)
+        .get()
+        .to_dict()["approved"]
+        == "denied"
+    )
+
+
+def test_deny_physician_endpoint_updates_firestore_collections():
+    # Verifica que el médico esté inicialmente en la colección "physicians" con el estado "pending"
+    physician_ref = db.collection("physicians").document(pytest.a_physician_uid)
+    physician_data = physician_ref.get().to_dict()
+    assert physician_data is not None
+    assert physician_data["approved"] == "approved"
+
+    # Realiza la solicitud para denegar al médico
+    mocked_response = requests.Response()
+    mocked_response.status_code = 200
+    with patch("requests.post", return_value=mocked_response) as mocked_request:
+        client.post(
+            f"/admin/deny-physician/{pytest.a_physician_uid}",
             headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
         )
 
-    physician_doc = db.collection("physicians").document(pytest.a_physician_uid).get()
-    assert physician_doc.exists == True
-    assert physician_doc.to_dict() == {
-        **a_KMK_physician_information,
-        "id": pytest.a_physician_uid,
-        "approved": "approved",
-    }
+    # Verifica que el médico ya no esté en la colección "physicians" y su estado sea "denied"
+    physician_data = physician_ref.get().to_dict()
+    assert physician_data is None
+
+    # Verifica que el médico haya sido agregado a la colección "deniedPhysicians"
+    denied_physician_ref = db.collection("deniedPhysicians").document(
+        pytest.a_physician_uid
+    )
+    denied_physician_data = denied_physician_ref.get().to_dict()
+    assert denied_physician_data is not None
+    assert denied_physician_data["approved"] == "denied"
 
 
-def test_unblock_physician_endpoint_for_a_non_physician_returns_a_400_code_and_message():
-    response_from_unblock_physician_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_patient_uid}",
+def test_deny_physician_endpoint_for_a_non_physician_returns_a_400_code_and_message():
+    response_from_deny_physician_endpoint = client.post(
+        f"/admin/deny-physician/{pytest.a_patient_uid}",
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
-    assert response_from_unblock_physician_endpoint.status_code == 400
+    assert response_from_deny_physician_endpoint.status_code == 400
     assert (
-        response_from_unblock_physician_endpoint.json()["detail"]
-        == "Can only unblock blocked physicians"
+        response_from_deny_physician_endpoint.json()["detail"]
+        == "Can only deny physicians"
     )
 
 
-def test_unblock_physician_endpoint_for_a_non_blocked_physician_returns_a_400_code_and_message():
-    response_from_unblock_physician_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.another_physician_uid}",
-        headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
-    )
-
-    assert response_from_unblock_physician_endpoint.status_code == 400
-    assert (
-        response_from_unblock_physician_endpoint.json()["detail"]
-        == "Can only unblock blocked physicians"
-    )
-
-
-def test_unblock_physician_with_no_authorization_header_returns_401_code():
+def test_deny_physician_with_no_authorization_header_returns_401_code():
     response_from_admin_registration_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_physician_uid}"
+        f"/admin/deny-physician/{pytest.a_physician_uid}"
     )
 
     assert response_from_admin_registration_endpoint.status_code == 401
@@ -267,9 +308,9 @@ def test_unblock_physician_with_no_authorization_header_returns_401_code():
     )
 
 
-def test_unblock_physician_with_empty_authorization_header_returns_401_code():
+def test_deny_physician_with_empty_authorization_header_returns_401_code():
     response_from_admin_registration_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        f"/admin/deny-physician/{pytest.a_physician_uid}",
         headers={"Authorization": ""},
     )
 
@@ -280,9 +321,9 @@ def test_unblock_physician_with_empty_authorization_header_returns_401_code():
     )
 
 
-def test_unblock_physician_with_empty_bearer_token_returns_401_code():
+def test_deny_physician_with_empty_bearer_token_returns_401_code():
     response_from_admin_registration_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        f"/admin/deny-physician/{pytest.a_physician_uid}",
         headers={"Authorization": f"Bearer "},
     )
 
@@ -293,9 +334,9 @@ def test_unblock_physician_with_empty_bearer_token_returns_401_code():
     )
 
 
-def test_unblock_physician_with_non_bearer_token_returns_401_code():
+def test_deny_physician_with_non_bearer_token_returns_401_code():
     response_from_admin_registration_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        f"/admin/deny-physician/{pytest.a_physician_uid}",
         headers={"Authorization": pytest.initial_admin_bearer},
     )
 
@@ -306,9 +347,9 @@ def test_unblock_physician_with_non_bearer_token_returns_401_code():
     )
 
 
-def test_unblock_physician_with_invalid_bearer_token_returns_401_code():
+def test_deny_physician_with_invalid_bearer_token_returns_401_code():
     response_from_admin_registration_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        f"/admin/deny-physician/{pytest.a_physician_uid}",
         headers={"Authorization": "Bearer smth"},
     )
 
@@ -319,7 +360,7 @@ def test_unblock_physician_with_invalid_bearer_token_returns_401_code():
     )
 
 
-def test_unblock_physician_by_non_admin_returns_403_code_and_message():
+def test_deny_physician_by_non_admin_returns_403_code_and_message():
     non_admin_bearer = client.post(
         "/users/login",
         json={
@@ -329,7 +370,7 @@ def test_unblock_physician_by_non_admin_returns_403_code_and_message():
     ).json()["token"]
 
     response_from_admin_registration_endpoint = client.post(
-        f"/admin/unblock-physician/{pytest.a_physician_uid}",
+        f"/admin/deny-physician/{pytest.a_physician_uid}",
         headers={"Authorization": f"Bearer {non_admin_bearer}"},
     )
 
@@ -340,13 +381,31 @@ def test_unblock_physician_by_non_admin_returns_403_code_and_message():
     )
 
 
-def test_unblock_physicians_endpoint_triggers_notification():
+def test_deny_physicians_endpoint_cancels_physicians_appointments():
+    assert (
+        db.collection("appointments").document(pytest.appointment_id).get().exists
+        == True
+    )
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
         client.post(
-            f"/admin/unblock-physician/{pytest.a_physician_uid}",
+            f"/admin/deny-physician/{pytest.a_physician_uid}",
+            headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
+        )
+    assert (
+        db.collection("appointments").document(pytest.appointment_id).get().exists
+        == False
+    )
+
+
+def test_deny_physicians_endpoint_triggers_notification():
+    mocked_response = requests.Response()
+    mocked_response.status_code = 200
+    with patch("requests.post", return_value=mocked_response) as mocked_request:
+        client.post(
+            f"/admin/deny-physician/{pytest.a_physician_uid}",
             headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
         )
 
-    assert mocked_request.call_count == 1
+    assert mocked_request.call_count == 2
