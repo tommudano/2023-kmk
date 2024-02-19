@@ -33,7 +33,6 @@ a_KMK_physician_information = {
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianforpendingvalidations@kmk.com",
-    "password": "verySecurePassword123",
     "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
 
@@ -44,7 +43,6 @@ another_KMK_physician_information = {
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianforpendingvalidations2@kmk.com",
-    "password": "verySecurePassword123",
     "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
 
@@ -55,7 +53,6 @@ other_KMK_physician_information = {
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianforpendingvalidations3@kmk.com",
-    "password": "verySecurePassword123",
     "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
 
@@ -108,7 +105,7 @@ def create_validated_physician_and_then_delete_him(create_patient_and_then_delet
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.physician_uid = created_user.uid
@@ -122,6 +119,7 @@ def create_validated_physician_and_then_delete_him(create_patient_and_then_delet
             "specialty": a_KMK_physician_information["specialty"],
             "tuition": a_KMK_physician_information["tuition"],
             "approved": "approved",
+            "agenda": {"1": {"start": 8, "finish": 18.5}},
         }
     )
     yield
@@ -139,7 +137,7 @@ def create_denied_physician_and_then_delete_him(
     created_user = auth.create_user(
         **{
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.another_physician_uid = created_user.uid
@@ -153,6 +151,7 @@ def create_denied_physician_and_then_delete_him(
             "specialty": another_KMK_physician_information["specialty"],
             "tuition": another_KMK_physician_information["tuition"],
             "approved": "denied",
+            "agenda": {"1": {"start": 8, "finish": 18.5}},
         }
     )
     yield
@@ -170,7 +169,7 @@ def create_pending_physician_and_then_delete_him(
     created_user = auth.create_user(
         **{
             "email": other_KMK_physician_information["email"],
-            "password": other_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.other_physician_uid = created_user.uid
@@ -184,6 +183,7 @@ def create_pending_physician_and_then_delete_him(
             "specialty": other_KMK_physician_information["specialty"],
             "tuition": other_KMK_physician_information["tuition"],
             "approved": "pending",
+            "agenda": {"1": {"start": 8, "finish": 18.5}},
         }
     )
     yield

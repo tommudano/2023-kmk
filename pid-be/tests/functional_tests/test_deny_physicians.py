@@ -35,7 +35,6 @@ a_KMK_physician_information = {
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianfordenial@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "approved",
     "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
@@ -47,7 +46,6 @@ another_KMK_physician_information = {
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianfordenial2@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "pending",
     "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
@@ -114,12 +112,12 @@ def create_a_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.a_physician_uid = created_user.uid
     db.collection("physicians").document(pytest.a_physician_uid).set(
-        a_KMK_physician_information
+        {**a_KMK_physician_information, "id": pytest.a_physician_uid}
     )
     yield
     try:
@@ -136,12 +134,12 @@ def create_another_physician_and_then_delete_him(
     created_user = auth.create_user(
         **{
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.another_physician_uid = created_user.uid
     db.collection("physicians").document(pytest.another_physician_uid).set(
-        another_KMK_physician_information
+        {**another_KMK_physician_information, "id": pytest.another_physician_uid}
     )
     yield
     try:

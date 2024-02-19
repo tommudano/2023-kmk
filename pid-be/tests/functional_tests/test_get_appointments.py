@@ -125,6 +125,7 @@ def create_test_physicians(create_test_users):
             "specialty": "surgeon",
             "approved": "approved",
             "tuition": "A111",
+            "role": "physician",
         }
     )
     db.collection("physicians").document(another_KMK_physician_information["uid"]).set(
@@ -137,6 +138,7 @@ def create_test_physicians(create_test_users):
             "specialty": "surgeon",
             "approved": "approved",
             "tuition": "A111",
+            "role": "physician",
         }
     )
     yield

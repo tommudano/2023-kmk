@@ -25,29 +25,29 @@ specialties = [
 
 a_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianfordenial@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "denied",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
 }
 
 another_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 2",
+    "first_name": "Physician Test User Register 2",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianfordenial2@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "approved",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
 }
 
 a_KMK_patient_information = {
     "role": "patient",
-    "name": "Patient Test User Register",
+    "first_name": "Patient Test User Register",
     "last_name": "Test Last Name",
     "email": "testpatientfordenial@kmk.com",
     "password": "verySecurePassword123",
@@ -94,7 +94,7 @@ def create_a_denied_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.a_physician_uid = created_user.uid
@@ -114,7 +114,7 @@ def create_another_denied_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.another_physician_uid = created_user.uid
@@ -226,6 +226,7 @@ def test_unblock_physician_endpoint_adds_physician_record_to_physicians_collecti
         **a_KMK_physician_information,
         "id": pytest.a_physician_uid,
         "approved": "approved",
+        "appointments": {},
     }
 
 

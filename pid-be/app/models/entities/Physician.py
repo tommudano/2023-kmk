@@ -26,7 +26,7 @@ class Physician:
         specialty: str,
         email: str,
         id: str,
-        agenda: dict,
+        agenda: dict = {},
         approved: str = "pending",
         appointments: dict = {},
     ):

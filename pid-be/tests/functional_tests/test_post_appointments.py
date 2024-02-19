@@ -100,6 +100,8 @@ def load_and_delete_specialties():
 def create_and_delete_physicians(load_and_delete_specialties):
     db.collection("physicians").document(valid_physician_id).set(
         {
+            "role": "physician",
+            "id": valid_physician_id,
             "first_name": "Doc",
             "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
             "approved": "approved",
@@ -111,6 +113,8 @@ def create_and_delete_physicians(load_and_delete_specialties):
     )
     db.collection("physicians").document(pending_physician_id).set(
         {
+            "role": "physician",
+            "id": pending_physician_id,
             "first_name": "Doc",
             "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
             "approved": "pending",
@@ -122,6 +126,8 @@ def create_and_delete_physicians(load_and_delete_specialties):
     )
     db.collection("physicians").document(denied_physician_id).set(
         {
+            "role": "physician",
+            "id": denied_physician_id,
             "first_name": "Doc",
             "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
             "approved": "denied",

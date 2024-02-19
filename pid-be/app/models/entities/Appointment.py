@@ -247,8 +247,8 @@ class Appointment:
         Physician.free_agenda(self.physician_id, self.date)
 
     def update(self, updated_values):
-        if not Physician.has_availability(
-            id=self.physician_id, date=updated_values["date"]
+        if not Physician.get_by_id(self.physician_id).has_availability(
+            updated_values["date"]
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -305,8 +305,8 @@ class Appointment:
                 "type": "CANCELED_APPOINTMENT_DUE_TO_PHYSICIAN_DENIAL",
                 "data": {
                     "email": patient["email"],
-                    "name": physician["first_name"],
-                    "last_name": physician["last_name"],
+                    "name": physician.first_name,
+                    "last_name": physician.last_name,
                     "day": date.day,
                     "month": date.month,
                     "year": date.year,

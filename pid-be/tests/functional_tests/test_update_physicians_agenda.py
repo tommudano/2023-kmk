@@ -27,6 +27,7 @@ today_date = datetime.fromtimestamp(round(time.time()))
 number_of_day_of_week = int(today_date.date().strftime("%w"))
 
 a_physician_information = {
+    "role": "physician",
     "id": "avalidid",
     "first_name": "Doc",
     "last_name": "Docson",

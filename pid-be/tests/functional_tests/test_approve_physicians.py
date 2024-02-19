@@ -29,24 +29,24 @@ specialties = [
 
 a_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianforapproving@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "pending",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
 }
 
 another_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 2",
+    "first_name": "Physician Test User Register 2",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianforapproving2@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "pending",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
 }
 
 a_KMK_patient_information = {
@@ -98,12 +98,12 @@ def create_a_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verysecurepassword123",
         }
     )
     pytest.a_physician_uid = created_user.uid
     db.collection("physicians").document(pytest.a_physician_uid).set(
-        a_KMK_physician_information
+        {**a_KMK_physician_information, "id": pytest.a_physician_uid}
     )
     yield
     try:
@@ -118,12 +118,12 @@ def create_another_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verysecurepassword123",
         }
     )
     pytest.another_physician_uid = created_user.uid
     db.collection("physicians").document(pytest.another_physician_uid).set(
-        another_KMK_physician_information
+        {**another_KMK_physician_information, "id": pytest.another_physician_uid}
     )
     yield
     try:

@@ -55,7 +55,7 @@ class BasicAppointmentResponse(BaseModel):
 
     def __init__(self, **data):
         physician = Physician.get_by_id(data["physician_id"])
-        data["physician"] = PhysicianResponse(**physician).model_dump()
+        data["physician"] = PhysicianResponse(**physician.__dict__).model_dump()
 
         patient = Patient.get_by_id(data["patient_id"])
         data["patient"] = PatientResponse(**patient).model_dump()

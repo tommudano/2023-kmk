@@ -100,12 +100,12 @@ async def login_user(
     elif login_response.status_code == 200:
         if Physician.is_physician(login_response.json()["localId"]):
             physician = Physician.get_by_id(login_response.json()["localId"])
-            if physician["approved"] == "denied" or physician["approved"] == "blocked":
+            if physician.approved == "denied" or physician.approved == "blocked":
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
                     content={"detail": "Account is not approved"},
                 )
-            elif physician["approved"] == "pending":
+            elif physician.approved == "pending":
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
                     content={"detail": "Account has to be approved by admin"},
@@ -194,7 +194,7 @@ async def register(
                 else "PHYSICIAN_REGISTERED_ACCOUNT"
             ),
             "data": {
-                "name": register_request.name,
+                "name": register_request.first_name,
                 "last_name": register_request.last_name,
                 "email": register_request.email,
             },
