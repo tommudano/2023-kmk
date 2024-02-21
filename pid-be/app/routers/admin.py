@@ -383,8 +383,22 @@ def update_specialty_value(
     * Update a specific specialties value.
     * Throw an error if the update fails.
     """
-    Specialty.update_value(specialty_name, specialty_update_value_request.value)
-    return {"message": "Successfull update"}
+    specialty = Specialty.get_by_name(specialty_name)
+    specialty.update_value(specialty_update_value_request.value)
+    physicians_for_given_specialty = Physician.get_approved_by_specialty(specialty_name)
+    for physician in physicians_for_given_specialty:
+        requests.post(
+            os.environ.get("NOTIFICATIONS_API_URL"),
+            json={
+                "type": "NEW_SPECIALTY_VALUE",
+                "data": {
+                    "email": physician["email"],
+                    "specialty": specialty_name,
+                    "max_value": specialty_update_value_request.value * 2,
+                },
+            },
+        )
+    return {"message": "Valor actualizado correctamente"}
 
 
 @router.get(

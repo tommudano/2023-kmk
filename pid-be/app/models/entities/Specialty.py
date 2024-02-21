@@ -8,14 +8,18 @@ db = firestore.client()
 class Specialty:
     id: str
     name: str
+    value: int
 
-    def __init__(
-        self,
-        id: str,
-        name: str,
-    ):
+    def __init__(self, id: str, name: str, value: int):
         self.name = name.lower()
         self.id = id
+        self.value = value
+
+    @staticmethod
+    def get_by_name(name):
+        specialty = db.collection("specialties").where("name", "==", name.lower()).get()
+
+        return Specialty(**specialty[0].to_dict())
 
     @staticmethod
     def get_all_names():
@@ -41,8 +45,9 @@ class Specialty:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="La especialidad ya existe",
             )
-        db.collection("specialties").document().set(
-            {"name": name.lower(), "value": 3000}
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": name.lower(), "value": 3000}
         )
 
     @staticmethod
@@ -54,7 +59,6 @@ class Specialty:
         for doc in docs:
             doc.reference.delete()
 
-    @staticmethod
-    def update_value(name, value):
-        docs = db.collection("specialties").where("name", "==", name.lower()).get()
-        db.collection("specialties").document(docs[0].id).update({"value": value})
+    def update_value(self, value):
+        db.collection("specialties").document(self.id).update({"value": value})
+        return Specialty(**{**self.__dict__, "value": value})
