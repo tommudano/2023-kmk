@@ -21,12 +21,14 @@ class Appointment:
     status: str
     attended: bool
     start_time: str
+    appointment_value: int
 
     def __init__(
         self,
         date: int,
         physician_id: str,
         patient_id: str,
+        appointment_value: int,
         id: str = None,
         created_at: int = None,
         updated_at: int = None,
@@ -49,6 +51,7 @@ class Appointment:
         self.status = status
         self.attended = attended
         self.start_time = start_time
+        self.appointment_value = appointment_value
 
     @staticmethod
     def get_all_appointments_for_patient_with(uid):
@@ -289,6 +292,7 @@ class Appointment:
                 "patient_id": self.patient_id,
                 "created_at": round(time.time()),
                 "status": self.status,
+                "appointment_value": self.appointment_value,
             }
         )
         Physician.schedule_appointment(id=self.physician_id, date=self.date)

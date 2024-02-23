@@ -62,7 +62,20 @@ appointment_data = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_patient_and_then_delete_him():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_patient_and_then_delete_him(load_and_delete_specialties):
     created_user = auth.create_user(
         **{
             "email": a_KMK_patient_information["email"],

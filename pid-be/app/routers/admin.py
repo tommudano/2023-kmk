@@ -277,7 +277,8 @@ def get_all_blocked_physicians(uid=Depends(Auth.is_admin)):
     try:
         physicians_blocked = Physician.get_physicians_denied()
         return {"physicians_blocked": physicians_blocked}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -295,7 +296,7 @@ def get_all_blocked_physicians(uid=Depends(Auth.is_admin)):
         500: {"model": AdminRegistrationError},
     },
 )
-def regsiter_admin(
+def register_admin(
     admin_resgister_request: AdminRegisterRequest, uid=Depends(Auth.is_admin)
 ):
     """

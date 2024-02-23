@@ -12,6 +12,7 @@ class PhysicianResponse(BaseModel):
     email: str
     tuition: str
     agenda: AgendaResponse
+    appointment_value: int
 
     def __init__(self, **data):
         data["agenda"] = AgendaResponse(
@@ -31,5 +32,9 @@ class GetPhysiciansResponse(BaseModel):
     physicians: list[Union[PhysicianResponse, None]]
 
 
-class GetPhysiciansError(BaseModel):
+class PhysiciansError(BaseModel):
     detail: str
+
+
+class SuccessfullUpdate(BaseModel):
+    message: str

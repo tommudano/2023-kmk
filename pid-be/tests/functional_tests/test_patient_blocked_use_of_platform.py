@@ -46,7 +46,19 @@ an_appointment_data = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_test_user():
+def load_and_delete_specialties():
+    id = db.collection("specialties").document().id
+    db.collection("specialties").document(id).set(
+        {"id": id, "name": "surgeon", "value": 3500}
+    )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_test_user(load_and_delete_specialties):
     created_user = auth.create_user(**a_KMK_user_information)
     pytest.patient_uid = created_user.uid
 

@@ -265,7 +265,7 @@ def get_user_info(user_id=Depends(Auth.is_logged_in)):
         if Patient.get_by_id(user_id):
             return Patient.get_by_id(user_id)
         if Physician.get_by_id(user_id):
-            return Physician.get_by_id(user_id)
+            return Physician.get_by_id(user_id).__dict__
         else:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,

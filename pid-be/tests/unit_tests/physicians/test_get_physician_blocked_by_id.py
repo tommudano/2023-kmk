@@ -14,6 +14,7 @@ physician = {
     "id": "123456789",
     "approved": "blocked",
     "agenda": {"1": {"start": 8, "finish": 18.5}},
+    "appointment_value": 1000,
 }
 
 

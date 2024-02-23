@@ -49,6 +49,7 @@ a_KMK_physician_information = {
     "email": "testphysicianfordenial@kmk.com",
     "approved": "approved",
     "agenda": {"1": {"start": 8, "finish": 18.5}},
+    "appointment_value": initial_value,
 }
 
 another_KMK_physician_information = {
@@ -60,6 +61,7 @@ another_KMK_physician_information = {
     "email": "testphysicianfordenial2@kmk.com",
     "approved": "approved",
     "agenda": {"1": {"start": 8, "finish": 18.5}},
+    "appointment_value": initial_value,
 }
 
 
@@ -139,7 +141,7 @@ def create_a_physician_and_then_delete_him():
 
 
 @pytest.fixture(autouse=True)
-def create_another_denied_physician_and_then_delete_him():
+def create_another_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": another_KMK_physician_information["email"],
@@ -330,3 +332,42 @@ def test_put_to_update_value_endpoint_for_second_specialty_triggers_no_emails(
     )
 
     assert mock_notifications_api.call_count == 0
+
+
+@patch("app.routers.admin.requests.post")
+def test_put_to_update_value_endpoint_updates_physicians_that_exceed_new_limit(
+    mock_notifications_api,
+):
+    assert (
+        db.collection("physicians")
+        .document(pytest.a_physician_uid)
+        .get()
+        .to_dict()["appointment_value"]
+        == initial_value
+    )
+    assert (
+        db.collection("physicians")
+        .document(pytest.another_physician_uid)
+        .get()
+        .to_dict()["appointment_value"]
+        == initial_value
+    )
+    client.put(
+        f"/admin/specialties/value/{specialties[0]}",
+        json={"value": 1},
+        headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
+    )
+    assert (
+        db.collection("physicians")
+        .document(pytest.a_physician_uid)
+        .get()
+        .to_dict()["appointment_value"]
+        == 2
+    )
+    assert (
+        db.collection("physicians")
+        .document(pytest.another_physician_uid)
+        .get()
+        .to_dict()["appointment_value"]
+        == 2
+    )

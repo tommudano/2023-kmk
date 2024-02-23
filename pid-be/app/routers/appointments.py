@@ -59,8 +59,13 @@ async def create_appointment(
     * Return the appointments id.
     * Throw an error if appointment creation fails.
     """
+    physician = Physician.get_by_id(appointment_creation_request.physician_id)
     appointment = Appointment(
-        **{**appointment_creation_request.model_dump(), "patient_id": patient_id}
+        **{
+            **appointment_creation_request.model_dump(),
+            "patient_id": patient_id,
+            "appointment_value": physician.appointment_value,
+        }
     )
     try:
         appointment_id = appointment.create()
@@ -68,7 +73,6 @@ async def create_appointment(
             appointment_id=appointment_id, patient_score=[], physician_score=[]
         )
         score.create()
-        physician = Physician.get_by_id(appointment_creation_request.physician_id)
         patient = Patient.get_by_id(patient_id)
         date = datetime.fromtimestamp(appointment_creation_request.date)
         requests.post(

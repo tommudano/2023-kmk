@@ -79,7 +79,10 @@ initial_admin_information = {
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:
@@ -122,6 +125,7 @@ def create_validated_physician_and_then_delete_him(create_patient_and_then_delet
             "specialty": a_KMK_physician_information["specialty"],
             "tuition": a_KMK_physician_information["tuition"],
             "approved": "approved",
+            "role": "physician",
         }
     )
     yield
@@ -153,6 +157,7 @@ def create_denied_physician_and_then_delete_him(
             "specialty": another_KMK_physician_information["specialty"],
             "tuition": another_KMK_physician_information["tuition"],
             "approved": "denied",
+            "role": "physician",
         }
     )
     yield
@@ -184,6 +189,7 @@ def create_pending_physician_and_then_delete_him(
             "specialty": other_KMK_physician_information["specialty"],
             "tuition": other_KMK_physician_information["tuition"],
             "approved": "pending",
+            "role": "physician",
         }
     )
     yield
@@ -299,6 +305,7 @@ def test_get_pending_validations_returns_a_list_of_a_populated_physician():
         ],
         "appointments": [],
     }
+    assert physician_to_validate["appointment_value"] == 3500
 
 
 def test_get_pending_validations_with_no_authorization_header_returns_401_code():

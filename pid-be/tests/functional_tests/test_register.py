@@ -99,7 +99,10 @@ def delete_test_physicians():
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:
@@ -426,6 +429,7 @@ def test_register_physician_sets_information_object_in_firestore():
         == a_KMK_physician_information["specialty"]
     )
     assert physician_object_from_firestore["approved"] == "pending"
+    assert physician_object_from_firestore["appointment_value"] == 3500
 
 
 def test_register_physician_with_invalid_specialty_returns_a_422_code():

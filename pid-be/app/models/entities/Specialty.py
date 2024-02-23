@@ -61,4 +61,12 @@ class Specialty:
 
     def update_value(self, value):
         db.collection("specialties").document(self.id).update({"value": value})
+        physicians_to_update = (
+            db.collection("physicians").where("appointment_value", ">", value * 2).get()
+        )
+        from app.models.entities.Physician import Physician
+
+        for physician in physicians_to_update:
+            physician = Physician(**physician.to_dict())
+            physician.update_appointment_value(value * 2)
         return Specialty(**{**self.__dict__, "value": value})

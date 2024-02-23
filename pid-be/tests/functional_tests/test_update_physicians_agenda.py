@@ -40,7 +40,20 @@ a_physician_information = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def load_and_delete_physicians():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def load_and_delete_physicians(load_and_delete_specialties):
     created_user = auth.create_user(
         **{"email": a_physician_information["email"], "password": "verystrongpassword"}
     )
