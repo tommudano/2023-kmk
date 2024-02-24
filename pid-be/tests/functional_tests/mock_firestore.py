@@ -94,6 +94,7 @@ if __name__ == "__main__":
         "specialty": specialties[0],
         "tuition": "123456",
         "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
+        "appointment_value": 1000,
     }
 
     another_physician_information = {
@@ -105,6 +106,7 @@ if __name__ == "__main__":
         "specialty": specialties[0],
         "tuition": "1112222",
         "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
+        "appointment_value": 1000,
     }
 
     other_physician_information = {
@@ -119,6 +121,7 @@ if __name__ == "__main__":
             str(number_of_day_of_week): {"start": 8, "finish": 18.5},
             str((number_of_day_of_week + 1) % 7): {"start": 7, "finish": 16},
         },
+        "appointment_value": 1000,
     }
 
     admin_information = {
@@ -159,7 +162,10 @@ if __name__ == "__main__":
     db.collection("records").document(a_patient_information["id"]).set(record_data)
 
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty, "value": 3000})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
 
     for blood_type in blood_types:
         db.collection("blood_types").document().set({"type": blood_type})

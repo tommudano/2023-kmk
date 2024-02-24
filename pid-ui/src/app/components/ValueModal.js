@@ -8,7 +8,9 @@ const ValueModal = ({
     confirmAction,
     message,
     currentValue,
+    title,
     setNewValue,
+    aclaration,
 }) => {
     return (
         <Modal
@@ -16,16 +18,17 @@ const ValueModal = ({
             onRequestClose={closeModal}
             contentLabel='Valor'
             className={styles.modal}
-            style={{ content: { height: "250px" } }}
+            style={{ content: { height: "300px" } }}
             overlayClassName={styles.overlay}
             ariaHideApp={false}
         >
-            <h2>Asignar un valor a la especialidad</h2>
+            <h2>{title}</h2>
             <p className={styles.message}>{message}</p>
+            <p className={styles.aclaration}>({aclaration})</p>
             <input
                 type='number'
                 min={1}
-                placeholder={currentValue}
+                placeholder={`\$${currentValue}`}
                 onChange={(e) => setNewValue(e.target.value)}
             />
             <div className={styles["buttons-container"]}>

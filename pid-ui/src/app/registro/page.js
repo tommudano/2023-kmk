@@ -96,7 +96,7 @@ const Registro = () => {
         setDisabledRegisterButton(true);
 
         let userData = {
-            name: nombre,
+            first_name: nombre,
             last_name: apellido,
             email: email,
             password: password,

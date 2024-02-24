@@ -36,7 +36,7 @@ from app.models.requests.ScoreRequests import (
     LoadScoreRequest,
 )
 from app.models.responses.PatientResponses import PatientResponse
-from app.models.responses.PhysicianResponses import PhysicianResponse
+from app.models.responses.PhysicianResponses import CompletePhysicianResponse
 
 from app.models.entities.Auth import Auth
 from app.models.entities.Patient import Patient
@@ -243,7 +243,7 @@ def get_user_roles(user_id=Depends(Auth.is_logged_in)):
 @router.get(
     "/user-info",
     status_code=status.HTTP_200_OK,
-    response_model=Union[PhysicianResponse, PatientResponse],
+    response_model=Union[CompletePhysicianResponse, PatientResponse],
     responses={
         401: {"model": UserInfoErrorResponse},
         403: {"model": UserInfoErrorResponse},

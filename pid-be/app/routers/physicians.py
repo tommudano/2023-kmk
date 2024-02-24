@@ -112,8 +112,8 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
                     else "APPROVED_UPDATED_APPOINTMENT"
                 ),
                 "data": {
-                    "physician_first_name": physician["first_name"],
-                    "physician_last_name": physician["last_name"],
+                    "physician_first_name": physician.first_name,
+                    "physician_last_name": physician.last_name,
                     "email": patient["email"],
                     "day": date.day,
                     "month": date.month,
@@ -124,7 +124,8 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
             },
         )
         return {"message": "Appointment approved successfully"}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

@@ -2,6 +2,25 @@ from pydantic import BaseModel
 from typing import Union
 
 from .AgendaResponses import AgendaResponse
+from .SpecialtiesResponses import SpecialtyResponse
+
+
+class CompletePhysicianResponse(BaseModel):
+    id: str
+    first_name: str
+    last_name: str
+    specialty: SpecialtyResponse
+    email: str
+    tuition: str
+    agenda: AgendaResponse
+    appointment_value: int
+
+    def __init__(self, **data):
+        data = {
+            **PhysicianResponse(**data).__dict__,
+            "specialty": SpecialtyResponse(**data),
+        }
+        super().__init__(**data)
 
 
 class PhysicianResponse(BaseModel):

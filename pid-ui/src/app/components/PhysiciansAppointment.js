@@ -31,6 +31,7 @@ const PhysiciansAppointment = ({
                 Fecha y hora:{" "}
                 {new Date(appointment.date * 1000).toLocaleString("es-AR")}
             </p>
+            <p>Valor de la consulta: ${appointment.appointment_value}</p>
             <div className={styles["appointment-buttons-container"]}>
                 {handleOpenAppointmentClosureModal ? (
                     <button
