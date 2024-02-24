@@ -20,6 +20,7 @@ class Test_physician_db_object:
             "id": "123456789",
             "approved": "approved",
             "agenda": {"1": {"start": 8, "finish": 18.5}},
+            "appointment_value": 1000,
         }
 
 

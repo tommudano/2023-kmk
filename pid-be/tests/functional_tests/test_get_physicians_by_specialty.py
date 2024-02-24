@@ -96,7 +96,20 @@ denied_approve_physician_information = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def load_and_delete_physicians():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def load_and_delete_physicians(load_and_delete_specialties):
     db.collection("physicians").document(a_physician_information["id"]).set(
         a_physician_information
     )
@@ -125,16 +138,6 @@ def create_test_user():
     a_KMK_user_information["uid"] = created_user.uid
     yield
     auth.delete_user(a_KMK_user_information["uid"])
-
-
-@pytest.fixture(scope="module", autouse=True)
-def load_and_delete_specialties():
-    for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
-    yield
-    specilaties_doc = db.collection("specialties").list_documents()
-    for specialty_doc in specilaties_doc:
-        specialty_doc.delete()
 
 
 def test_valid_request_to_get_physicians_endpoint_returns_200_code():
@@ -276,6 +279,7 @@ def test_valid_request_to_get_physicians_endpoint_for_first_specialty_returns_a_
             ]["finish"],
         }
     ]
+    assert first_physician_to_assert["appointment_value"] == 3500
 
     assert second_physician_to_assert["id"] == another_physician_information["id"]
     assert (
@@ -305,6 +309,7 @@ def test_valid_request_to_get_physicians_endpoint_for_first_specialty_returns_a_
             ]["finish"],
         }
     ]
+    assert second_physician_to_assert["appointment_value"] == 3500
 
 
 def test_get_physicians_by_specialty_with_no_authorization_header_returns_401_code():

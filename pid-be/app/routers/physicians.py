@@ -2,10 +2,13 @@ import os
 import requests
 from datetime import datetime
 from typing import Dict
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.models.requests.PhysicianRequests import AgendaUpdateRequest
+from app.models.requests.PhysicianRequests import (
+    AgendaUpdateRequest,
+    UpdatePhysicianValueRequest,
+)
 
 from app.models.entities.Auth import Auth
 from app.models.entities.Physician import Physician
@@ -13,7 +16,8 @@ from app.models.entities.Patient import Patient
 from app.models.entities.Appointment import Appointment
 from app.models.responses.PhysicianResponses import (
     GetPhysiciansResponse,
-    GetPhysiciansError,
+    PhysiciansError,
+    SuccessfullUpdate,
 )
 from app.models.responses.ValidationResponses import (
     SuccessfullValidationResponse,
@@ -36,8 +40,8 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
     response_model=GetPhysiciansResponse,
     responses={
-        401: {"model": GetPhysiciansError},
-        500: {"model": GetPhysiciansError},
+        401: {"model": PhysiciansError},
+        500: {"model": PhysiciansError},
     },
 )
 def get_approved_physicians_by_specialty(
@@ -57,7 +61,7 @@ def get_approved_physicians_by_specialty(
         physicians = Physician.get_approved_by_specialty(specialty_name)
         return {"physicians": physicians}
     except Exception as e:
-        # print(e)
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -108,8 +112,8 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
                     else "APPROVED_UPDATED_APPOINTMENT"
                 ),
                 "data": {
-                    "physician_first_name": physician["first_name"],
-                    "physician_last_name": physician["last_name"],
+                    "physician_first_name": physician.first_name,
+                    "physician_last_name": physician.last_name,
                     "email": patient["email"],
                     "day": date.day,
                     "month": date.month,
@@ -120,7 +124,8 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
             },
         )
         return {"message": "Appointment approved successfully"}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -207,6 +212,57 @@ def update_physicians_agenda(
         Physician.update_agenda(id=uid, agenda=agenda_update_request)
         return {"message": "Agenda updated successfully"}
     except:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal server error"},
+        )
+
+
+@router.put(
+    "/value",
+    status_code=status.HTTP_200_OK,
+    response_model=SuccessfullUpdate,
+    responses={
+        400: {"model": PhysiciansError},
+        401: {"model": PhysiciansError},
+        403: {"model": PhysiciansError},
+        500: {"model": PhysiciansError},
+    },
+)
+def update_physician_value(
+    update_physician_value_request: UpdatePhysicianValueRequest,
+    uid=Depends(Auth.is_logged_in),
+):
+    """
+    Update physicians appointmemt value.
+
+    This will allow physicians to update their appointment values.
+
+    This path operation will:
+
+    * Update appointment values.
+    * Throw an error if the validation fails.
+    """
+    try:
+        if not Physician.is_physician(uid):
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={
+                    "detail": "Solo los medicos pueden actualizar el valor de sus consultas"
+                },
+            )
+        physician = Physician.get_by_id(uid)
+        physician = physician.update_appointment_value(
+            update_physician_value_request.new_value
+        )
+        return {"message": "Valor actualizado correctamente"}
+    except HTTPException as http_exception:
+        return JSONResponse(
+            status_code=http_exception.status_code,
+            content={"detail": http_exception.detail},
+        )
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

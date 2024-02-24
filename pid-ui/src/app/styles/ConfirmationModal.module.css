@@ -41,3 +41,9 @@
 .message {
     margin-top: 15px; /* Ajusta este valor según sea necesario para mover el texto hacia abajo */
 }
+
+.aclaration {
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 8px;
+}

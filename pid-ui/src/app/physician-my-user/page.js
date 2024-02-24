@@ -9,6 +9,7 @@ import https from "https";
 import validator from "validator";
 import { Footer, Header, PhysicianTabBar } from "../components/header";
 import { toast } from "react-toastify";
+import ValueModal from "../components/ValueModal";
 
 const UserProfile = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +40,8 @@ const UserProfile = () => {
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [error, setError] = useState("");
     const [activeSubTab, setActiveSubTab] = useState("tab1");
+    const [showValueModal, setShowValueModal] = useState(false);
+    const [newValue, setNewValue] = useState(undefined);
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -79,6 +82,8 @@ const UserProfile = () => {
                 httpsAgent: agent,
             });
 
+            console.log("RESPONSE", response);
+
             const userData = {
                 firstName: response.data.first_name,
                 lastName: response.data.last_name,
@@ -86,6 +91,7 @@ const UserProfile = () => {
                 agenda: user.agenda,
                 id: response.data.id,
                 specialty: response.data.specialty,
+                appointment_value: response.data.appointment_value,
             };
 
             response.data.agenda.working_hours.forEach((element) => {
@@ -250,13 +256,10 @@ const UserProfile = () => {
 
         try {
             // Realiza una solicitud a la API para cambiar la contraseña
-            const response = await axios.post(
-                `${apiURL}users/change-password`,
-                {
-                    current_password: password,
-                    new_password: newPassword,
-                }
-            );
+            await axios.post(`${apiURL}users/change-password`, {
+                current_password: password,
+                new_password: newPassword,
+            });
 
             setPassword("");
             setNewPassword("");
@@ -267,6 +270,22 @@ const UserProfile = () => {
             toast.error(
                 "Error al cambiar la contraseña: " + error.response.data.detail
             );
+        }
+    };
+
+    const updateAppointmentValue = async () => {
+        setShowValueModal(false);
+        try {
+            toast.info("Actualizando valor...");
+            const response = await axios.put(`${apiURL}physicians/value`, {
+                new_value: newValue,
+            });
+            console.log(response.data);
+            toast.success("Valor actualizado exitosamente");
+            getUserData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Error al actualizar el valor");
         }
     };
 
@@ -346,6 +365,20 @@ const UserProfile = () => {
 
                         {activeSubTab === "tab1" ? (
                             <div className={styles.form}>
+                                <ValueModal
+                                    isOpen={showValueModal}
+                                    closeModal={() => setShowValueModal(false)}
+                                    confirmAction={updateAppointmentValue}
+                                    currentValue={user.appointment_value}
+                                    setNewValue={setNewValue}
+                                    title={`Asignar un valor a las consultas (Maximo valor admitido: $${
+                                        user.specialty.value * 2
+                                    })`}
+                                    message={
+                                        "¿Cual es el nuevo valor de las consultas?"
+                                    }
+                                    aclaration='Este valor solo sera aplicado a los nuevos turnos'
+                                />
                                 {/* Datos del usuario */}
                                 <div className={styles["title"]}>
                                     Datos del Usuario
@@ -391,19 +424,53 @@ const UserProfile = () => {
                                 <div className={styles["form-group"]}>
                                     <label htmlFor='email'>Especialidad:</label>
                                     <input
-                                        type='email'
-                                        id='email'
+                                        type='text'
+                                        id='especialidad'
                                         value={
-                                            user.specialty
+                                            user.specialty.name
                                                 .charAt(0)
                                                 .toUpperCase() +
-                                            user.specialty.slice(1)
+                                            user.specialty.name.slice(1)
                                         }
                                         readOnly
                                         className={
                                             styles["disabled-input-info"]
                                         }
                                     />
+                                </div>
+                                <div
+                                    className={styles["physician-value-group"]}
+                                >
+                                    <label htmlFor='email'>
+                                        Valor de la Consulta:
+                                    </label>
+                                    <div
+                                        className={
+                                            styles[
+                                                "physician-value-update-group"
+                                            ]
+                                        }
+                                    >
+                                        <input
+                                            type='text'
+                                            id='valor'
+                                            value={`\$${user.appointment_value}`}
+                                            readOnly
+                                            className={
+                                                styles["disabled-input-info"]
+                                            }
+                                        />
+                                        <button
+                                            className={
+                                                styles["standard-button"]
+                                            }
+                                            onClick={() =>
+                                                setShowValueModal(true)
+                                            }
+                                        >
+                                            Actualizar
+                                        </button>
+                                    </div>
                                 </div>{" "}
                             </div>
                         ) : null}

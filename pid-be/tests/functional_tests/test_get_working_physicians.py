@@ -76,7 +76,10 @@ initial_admin_information = {
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:
@@ -119,7 +122,8 @@ def create_validated_physician_and_then_delete_him(create_patient_and_then_delet
             "specialty": a_KMK_physician_information["specialty"],
             "tuition": a_KMK_physician_information["tuition"],
             "approved": "approved",
-            "agenda": {"1": {"start": 8, "finish": 18.5}},
+            "agenda": a_KMK_physician_information["agenda"],
+            "role": "physician",
         }
     )
     yield
@@ -151,7 +155,8 @@ def create_denied_physician_and_then_delete_him(
             "specialty": another_KMK_physician_information["specialty"],
             "tuition": another_KMK_physician_information["tuition"],
             "approved": "denied",
-            "agenda": {"1": {"start": 8, "finish": 18.5}},
+            "agenda": another_KMK_physician_information["agenda"],
+            "role": "physician",
         }
     )
     yield
@@ -183,7 +188,8 @@ def create_pending_physician_and_then_delete_him(
             "specialty": other_KMK_physician_information["specialty"],
             "tuition": other_KMK_physician_information["tuition"],
             "approved": "pending",
-            "agenda": {"1": {"start": 8, "finish": 18.5}},
+            "agenda": other_KMK_physician_information["agenda"],
+            "role": "physician",
         }
     )
     yield

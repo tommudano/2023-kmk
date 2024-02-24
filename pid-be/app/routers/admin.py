@@ -277,7 +277,8 @@ def get_all_blocked_physicians(uid=Depends(Auth.is_admin)):
     try:
         physicians_blocked = Physician.get_physicians_denied()
         return {"physicians_blocked": physicians_blocked}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -295,7 +296,7 @@ def get_all_blocked_physicians(uid=Depends(Auth.is_admin)):
         500: {"model": AdminRegistrationError},
     },
 )
-def regsiter_admin(
+def register_admin(
     admin_resgister_request: AdminRegisterRequest, uid=Depends(Auth.is_admin)
 ):
     """
@@ -383,8 +384,22 @@ def update_specialty_value(
     * Update a specific specialties value.
     * Throw an error if the update fails.
     """
-    Specialty.update_value(specialty_name, specialty_update_value_request.value)
-    return {"message": "Successfull update"}
+    specialty = Specialty.get_by_name(specialty_name)
+    specialty.update_value(specialty_update_value_request.value)
+    physicians_for_given_specialty = Physician.get_approved_by_specialty(specialty_name)
+    for physician in physicians_for_given_specialty:
+        requests.post(
+            os.environ.get("NOTIFICATIONS_API_URL"),
+            json={
+                "type": "NEW_SPECIALTY_VALUE",
+                "data": {
+                    "email": physician["email"],
+                    "specialty": specialty_name,
+                    "max_value": specialty_update_value_request.value * 2,
+                },
+            },
+        )
+    return {"message": "Valor actualizado correctamente"}
 
 
 @router.get(

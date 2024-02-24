@@ -12,8 +12,9 @@ physician = {
     "specialty": "cardiologia",
     "email": "test@email.com",
     "id": "123456789",
-    "approved": "blocked",
+    "approved": "approved",
     "agenda": {"1": {"start": 8, "finish": 18.5}},
+    "appointment_value": 1000,
 }
 
 
@@ -24,8 +25,8 @@ def test_function_queries_db(mock_db):
     mock_response.document().get().to_dict.return_value = physician
     mock_db.return_value = mock_response
 
-    Physician.get_blocked_by_id(id)
-    mock_db.assert_called_with("deniedPhysicians")
+    Physician.get_by_id(id)
+    mock_db.assert_called_with("physicians")
     mock_db().document.assert_called_with(id)
     mock_db().document().get.assert_called_with()
 
@@ -37,6 +38,6 @@ def test_function_returns_a_physician_instance(mock_db):
     mock_response.document().get().to_dict.return_value = physician
     mock_db.return_value = mock_response
 
-    returned_physician = Physician.get_blocked_by_id(id)
+    returned_physician = Physician.get_by_id(id)
     assert type(returned_physician) == Physician
     assert returned_physician.__dict__ == Physician(**physician).__dict__

@@ -52,6 +52,7 @@ class BasicAppointmentResponse(BaseModel):
     status: str = "pending"
     attended: Union[bool, None] = None
     start_time: Union[str, None] = None
+    appointment_value: int
 
     def __init__(self, **data):
         physician = Physician.get_by_id(data["physician_id"])

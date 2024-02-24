@@ -65,7 +65,10 @@ another_KMK_patient_information = {
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:

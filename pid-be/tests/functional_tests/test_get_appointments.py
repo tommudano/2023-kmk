@@ -67,7 +67,19 @@ other_appointment_data = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_test_users():
+def load_and_delete_specialties():
+    id = db.collection("specialties").document().id
+    db.collection("specialties").document(id).set(
+        {"id": id, "name": "surgeon", "value": 3500}
+    )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_test_users(load_and_delete_specialties):
     first_created_user = auth.create_user(**a_KMK_user_information)
     second_created_user = auth.create_user(**another_KMK_user_information)
     third_created_user = auth.create_user(**other_KMK_user_information)
@@ -331,6 +343,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects():
             ],
             "appointments": [an_appointment_data["date"]],
         },
+        "appointment_value": 3500,
     }
     assert first_appointment_to_validate["patient"] == {
         "id": a_KMK_user_information["uid"],
@@ -339,6 +352,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects():
         "email": a_KMK_user_information["email"],
     }
     assert type(first_appointment_to_validate["created_at"]) == int
+    assert first_appointment_to_validate["appointment_value"] == 3500
 
     assert second_appointment_to_validate["id"] == another_appointment_data["id"]
     assert second_appointment_to_validate["date"] == another_appointment_data["date"]
@@ -368,6 +382,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects():
                 another_appointment_data["date"],
             },
         },
+        "appointment_value": 3500,
     }
     assert second_appointment_to_validate["patient"] == {
         "id": a_KMK_user_information["uid"],
@@ -376,6 +391,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects():
         "email": a_KMK_user_information["email"],
     }
     assert type(second_appointment_to_validate["created_at"]) == int
+    assert second_appointment_to_validate["appointment_value"] == 3500
 
 
 def test_get_appointments_with_no_authorization_header_returns_401_code():
@@ -505,6 +521,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects_for
                 another_appointment_data["date"],
             },
         },
+        "appointment_value": 3500,
     }
     assert first_appointment_to_validate["patient"] == {
         "id": a_KMK_user_information["uid"],
@@ -513,6 +530,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects_for
         "email": a_KMK_user_information["email"],
     }
     assert type(first_appointment_to_validate["created_at"]) == int
+    assert first_appointment_to_validate["appointment_value"] == 3500
 
     assert second_appointment_to_validate["id"] == other_appointment_data["id"]
     assert second_appointment_to_validate["date"] == other_appointment_data["date"]
@@ -542,6 +560,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects_for
                 another_appointment_data["date"],
             },
         },
+        "appointment_value": 3500,
     }
     assert second_appointment_to_validate["patient"] == {
         "id": another_KMK_user_information["uid"],
@@ -550,6 +569,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects_for
         "email": another_KMK_user_information["email"],
     }
     assert type(second_appointment_to_validate["created_at"]) == int
+    assert second_appointment_to_validate["appointment_value"] == 3500
 
 
 def test_user_as_physician_that_is_also_a_patient_receives_appointments():
@@ -658,3 +678,27 @@ def test_get_appointments_with_invalid_bearer_token_returns_401_code():
         response_to_appointment_get_endpoint.json()["detail"]
         == "User must be logged in"
     )
+
+
+def test_appointments_value_doesnt_change_if_physicians_appointment_value_changes():
+    response_to_get_endpoint = client.get(
+        "/appointments/physician",
+        headers={"Authorization": f"Bearer {pytest.second_physician_bearer}"},
+    )
+    appointments = response_to_get_endpoint.json()["appointments"]
+    assert appointments[0]["appointment_value"] == 3500
+    assert appointments[1]["appointment_value"] == 3500
+
+    client.put(
+        "/physicians/value",
+        json={"new_value": 4000},
+        headers={"Authorization": f"Bearer {pytest.second_physician_bearer}"},
+    )
+
+    response_to_get_endpoint = client.get(
+        "/appointments/physician",
+        headers={"Authorization": f"Bearer {pytest.second_physician_bearer}"},
+    )
+    appointments = response_to_get_endpoint.json()["appointments"]
+    assert appointments[0]["appointment_value"] == 3500
+    assert appointments[1]["appointment_value"] == 3500

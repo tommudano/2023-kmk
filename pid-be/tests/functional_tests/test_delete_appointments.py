@@ -97,7 +97,20 @@ other_appointment_data = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_users():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_users(load_and_delete_specialties):
     first_created_user = auth.create_user(**a_KMK_user_information)
     second_created_user = auth.create_user(**another_KMK_user_information)
     third_created_user = auth.create_user(**other_KMK_user_information)
@@ -253,17 +266,7 @@ def create_test_environment(log_in_users):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def load_and_delete_specialties(log_in_users):
-    for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
-    yield
-    specilaties_doc = db.collection("specialties").list_documents()
-    for specialty_doc in specilaties_doc:
-        specialty_doc.delete()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def load_and_delete_specialties(log_in_users):
+def delete_specialties(log_in_users):
     yield
     appointment_docs = db.collection("appointments").list_documents()
     for appointment_doc in appointment_docs:

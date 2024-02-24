@@ -24,6 +24,7 @@ const DashboardPatient = () => {
     const [doctors, setDoctors] = useState([]);
     const [specialties, setSpecialties] = useState([]);
     const [selectedSpecialty, setSelectedSpecialty] = useState("");
+    const [selectedDoctorId, setSelectedDoctorId] = useState("");
     const [selectedDoctor, setSelectedDoctor] = useState("");
     const [physiciansAgenda, setPhysiciansAgenda] = useState({});
     const [date, setDate] = useState(new Date());
@@ -119,14 +120,12 @@ const DashboardPatient = () => {
         }
     };
 
-    const saveAgenda = (doctorId) => {
+    const saveInformation = (doctorId) => {
         if (doctorId) {
-            console.log(
-                doctors.filter((doctor) => doctor.id == doctorId)[0].agenda
-            );
-            setPhysiciansAgenda(
-                doctors.filter((doctor) => doctor.id == doctorId)[0].agenda
-            );
+            let doctor = doctors.filter((doctor) => doctor.id == doctorId)[0];
+            console.log(doctor.agenda);
+            setSelectedDoctor(doctor);
+            setPhysiciansAgenda(doctor.agenda);
             getPhysicianScores(doctorId);
         } else {
             setPhysiciansAgenda({});
@@ -141,7 +140,7 @@ const DashboardPatient = () => {
             const response = await axios.post(
                 `${apiURL}appointments/`,
                 {
-                    physician_id: selectedDoctor,
+                    physician_id: selectedDoctorId,
                     date: Math.round(date.getTime() / 1000),
                 },
                 {
@@ -149,7 +148,7 @@ const DashboardPatient = () => {
                 }
             );
             toast.success("Turno solicitado. Aguarde aprobacion del mismo");
-            setSelectedDoctor("");
+            setSelectedDoctorId("");
             setDate(new Date());
             setSelectedSpecialty("");
             setPhysiciansAgenda({});
@@ -224,11 +223,11 @@ const DashboardPatient = () => {
                             </div>
                             <select
                                 id='doctor'
-                                value={selectedDoctor}
+                                value={selectedDoctorId}
                                 required
                                 onChange={(e) => {
-                                    setSelectedDoctor(e.target.value);
-                                    saveAgenda(e.target.value);
+                                    setSelectedDoctorId(e.target.value);
+                                    saveInformation(e.target.value);
                                     if (e.target.value === "")
                                         setPhysicianScores([]);
                                 }}
@@ -245,6 +244,17 @@ const DashboardPatient = () => {
                                     </option>
                                 ))}
                             </select>
+
+                            {selectedDoctorId ? (
+                                <div
+                                    className={
+                                        styles["appointment-value-patient"]
+                                    }
+                                >
+                                    Precio de consulta: $
+                                    {selectedDoctor.appointment_value}
+                                </div>
+                            ) : null}
 
                             <div className={styles["subtitle"]}>
                                 Puntuaciones del médico{" "}
@@ -385,12 +395,14 @@ const DashboardPatient = () => {
                             <button
                                 type='submit'
                                 className={`${styles["submit-button"]} ${
-                                    !selectedDoctor || disabledAppointmentButton
+                                    !selectedDoctorId ||
+                                    disabledAppointmentButton
                                         ? styles["disabled-button"]
                                         : ""
                                 }`}
                                 disabled={
-                                    !selectedDoctor || disabledAppointmentButton
+                                    !selectedDoctorId ||
+                                    disabledAppointmentButton
                                 }
                             >
                                 Solicitar turno

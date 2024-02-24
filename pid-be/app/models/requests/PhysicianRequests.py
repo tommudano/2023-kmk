@@ -15,3 +15,7 @@ class AgendaUpdateRequest(BaseModel):
         ):
             raise ValueError("Finishing time must be greater thabn start time")
         return agenda_update_request_attributes
+
+
+class UpdatePhysicianValueRequest(BaseModel):
+    new_value: int = Query(ge=0)

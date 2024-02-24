@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from datetime import datetime
 from firebase_admin import firestore
+from app.models.entities.Specialty import Specialty
 
 db = firestore.client()
 
@@ -16,16 +17,18 @@ class Physician:
     approved: str
     agenda: dict
     appointments: list
+    appointment_value: int
 
     def __init__(
         self,
-        role: str,
         first_name: str,
         last_name: str,
         tuition: str,
         specialty: str,
         email: str,
         id: str,
+        role: str = "physician",
+        appointment_value: int = None,
         agenda: dict = {},
         approved: str = "pending",
         appointments: dict = {},
@@ -40,6 +43,11 @@ class Physician:
         self.agenda = agenda
         self.approved = approved
         self.appointments = appointments
+        self.appointment_value = (
+            appointment_value
+            if appointment_value
+            else Specialty.get_by_name(self.specialty).value
+        )
 
     @staticmethod
     def get_by_id(id):
@@ -108,7 +116,9 @@ class Physician:
         physicians = (
             db.collection("physicians").where("approved", "==", "pending").get()
         )
-        physicians_list = [physician.to_dict() for physician in physicians]
+        physicians_list = [
+            Physician(**physician.to_dict()).__dict__ for physician in physicians
+        ]
         return sorted(
             physicians_list,
             key=lambda physician: physician["first_name"].lower()
@@ -120,7 +130,9 @@ class Physician:
         physicians = (
             db.collection("physicians").where("approved", "==", "approved").get()
         )
-        physicians_list = [physician.to_dict() for physician in physicians]
+        physicians_list = [
+            Physician(**physician.to_dict()).__dict__ for physician in physicians
+        ]
         return sorted(
             physicians_list,
             key=lambda physician: physician["first_name"].lower()
@@ -130,7 +142,9 @@ class Physician:
     @staticmethod
     def get_physicians_denied():
         physicians = db.collection("deniedPhysicians").get()
-        physicians_list = [physician.to_dict() for physician in physicians]
+        physicians_list = [
+            Physician(**physician.to_dict()).__dict__ for physician in physicians
+        ]
         return sorted(
             physicians_list,
             key=lambda physician: physician["first_name"].lower()
@@ -163,6 +177,18 @@ class Physician:
     def update_agenda(id, agenda):
         db.collection("physicians").document(id).update({"agenda": agenda})
 
+    def update_appointment_value(self, new_value):
+        specialty = Specialty.get_by_name(self.specialty)
+        if specialty.value * 2 < new_value:
+            raise HTTPException(
+                status_code=400,
+                detail="El nuevo valor debe ser menor o igual al doble del valo que uso el administrador",
+            )
+        db.collection("physicians").document(self.id).update(
+            {"appointment_value": new_value}
+        )
+        return Physician(**{**self.__dict__, "appointment_value": new_value})
+
     def create(self):
         if db.collection("physicians").document(self.id).get().exists:
             raise HTTPException(
@@ -185,6 +211,7 @@ class Physician:
                     "4": {"start": 8, "finish": 18},
                     "5": {"start": 8, "finish": 18},
                 },
+                "appointment_value": self.appointment_value,
             }
         )
         return self.id
