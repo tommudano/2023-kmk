@@ -1,11 +1,12 @@
 from pydantic import BaseModel
-from typing import Union
+from typing import Union, Literal
 
 from .AgendaResponses import AgendaResponse
 from .SpecialtiesResponses import SpecialtyResponse
 
 
 class CompletePhysicianResponse(BaseModel):
+    role: Literal["physician"] = "physician"
     id: str
     first_name: str
     last_name: str
