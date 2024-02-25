@@ -96,12 +96,16 @@ def start():
     """
     if os.environ.get("ENV") == "prod":
         uvicorn.run(
+            "app.main:app", host="0.0.0.0", port=CTX_PORT, forwarded_allow_ips="*"
+        )
+    else:
+        uvicorn.run(
             "app.main:app",
             host="0.0.0.0",
             port=CTX_PORT,
+            forwarded_allow_ips="*",
+            reload=True,
         )
-    else:
-        uvicorn.run("app.main:app", host="0.0.0.0", port=CTX_PORT, reload=True)
 
 
 def custom_openapi():
