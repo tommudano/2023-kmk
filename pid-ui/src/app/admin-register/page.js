@@ -23,6 +23,7 @@ const Admin = () => {
     const [error, setError] = useState("");
     const [disabledRegisterButton, setDisabledRegisterButton] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -160,7 +161,7 @@ const Admin = () => {
                             <div className={styles["form-group"]}>
                                 <label htmlFor='password'>Contraseña</label>
                                 <input
-                                    type='password'
+                                    type={showPassword ? "text" : "password"}
                                     id='password'
                                     value={password}
                                     onChange={(e) => {
@@ -175,7 +176,7 @@ const Admin = () => {
                                     Repetir Contraseña
                                 </label>
                                 <input
-                                    type='password'
+                                    type={showPassword ? "text" : "password"}
                                     id='confirmPassword'
                                     value={confirmPassword}
                                     onChange={(e) => {
@@ -195,6 +196,21 @@ const Admin = () => {
                                     Las contraseñas no coinciden.
                                 </div>
                             )}
+                            <div>
+                                <input
+                                    id='showPassword'
+                                    name='showPassword'
+                                    type='checkbox'
+                                    style={{ all: "revert" }}
+                                    value={showPassword}
+                                    onChange={() =>
+                                        setShowPassword((prev) => !prev)
+                                    }
+                                />
+                                <label htmlFor='showPassword'>
+                                    Mostrar Contraseña
+                                </label>
+                            </div>
                             <button
                                 type='submit'
                                 className={`${styles["button"]} ${

@@ -15,6 +15,7 @@ const Landing = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [disabledLoginButton, setDisabledLoginButton] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
     const agent = new https.Agent({
@@ -101,12 +102,23 @@ const Landing = () => {
                 <div className={styles["form-group"]}>
                     <label htmlFor='password'>Contraseña</label>
                     <input
-                        type='password'
+                        type={showPassword ? "text" : "password"}
                         id='password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+                </div>
+                <div style={{ alignSelf: "start" }}>
+                    <input
+                        id='showPassword'
+                        name='showPassword'
+                        type='checkbox'
+                        style={{ all: "revert" }}
+                        value={showPassword}
+                        onChange={() => setShowPassword((prev) => !prev)}
+                    />
+                    <label htmlFor='showPassword'>Mostrar Contraseña</label>
                 </div>
                 <button
                     type='submit'
