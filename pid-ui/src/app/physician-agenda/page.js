@@ -202,6 +202,7 @@ const PhysicianAgenda = () => {
         }
         setDisabledCloseAppointmentButton(false);
         buttonsDisabledSetter(false);
+        setNewObservationContent("");
     };
 
     const handleDeleteClick = (appointmentId, setDisabledButtons) => {
