@@ -344,6 +344,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects():
             "appointments": [an_appointment_data["date"]],
         },
         "appointment_value": 3500,
+        "google_meet_conference_enabled": False,
     }
     assert first_appointment_to_validate["patient"] == {
         "id": a_KMK_user_information["uid"],
@@ -384,6 +385,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects():
             },
         },
         "appointment_value": 3500,
+        "google_meet_conference_enabled": False,
     }
     assert second_appointment_to_validate["patient"] == {
         "id": a_KMK_user_information["uid"],
@@ -524,6 +526,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects_for
             },
         },
         "appointment_value": 3500,
+        "google_meet_conference_enabled": False,
     }
     assert first_appointment_to_validate["patient"] == {
         "id": a_KMK_user_information["uid"],
@@ -564,6 +567,7 @@ def test_valid_request_to_get_endpoint_returns_populated_appointment_objects_for
             },
         },
         "appointment_value": 3500,
+        "google_meet_conference_enabled": False,
     }
     assert second_appointment_to_validate["patient"] == {
         "id": another_KMK_user_information["uid"],

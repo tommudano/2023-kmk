@@ -231,6 +231,7 @@ def test_unblock_physician_endpoint_adds_physician_record_to_physicians_collecti
         "approved": "approved",
         "appointments": {},
         "appointment_value": 3500,
+        "google_meet_conference_enabled": False,
     }
 
 
