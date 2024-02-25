@@ -60,6 +60,16 @@ async def create_appointment(
     * Throw an error if appointment creation fails.
     """
     physician = Physician.get_by_id(appointment_creation_request.physician_id)
+    if (
+        not physician.google_meet_conference_enabled
+        and appointment_creation_request.google_meet_conference
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "detail": "El medico no acepta videoconferencias por meet gestionadas a traves de la app"
+            },
+        )
     appointment = Appointment(
         **{
             **appointment_creation_request.model_dump(),
@@ -78,7 +88,11 @@ async def create_appointment(
         requests.post(
             os.environ.get("NOTIFICATIONS_API_URL"),
             json={
-                "type": "PENDING_APPOINTMENT",
+                "type": (
+                    "PENDING_APPOINTMENT"
+                    if not appointment_creation_request.google_meet_conference
+                    else "PENDING_VIRTUAL_APPOINTMENT"
+                ),
                 "data": {
                     "email": physician.email,
                     "name": patient["first_name"],
@@ -315,8 +329,7 @@ def update_appointment(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"detail": "Invalid appointment id"},
         )
-    appointment.update(update_appointment_request.model_dump())
-
+    appointment = appointment.update(update_appointment_request.model_dump())
     physician = Physician.get_by_id(appointment.physician_id)
     patient = Patient.get_by_id(uid)
     date = datetime.fromtimestamp(update_appointment_request.date)

@@ -3,7 +3,7 @@ from pydantic import BaseModel, root_validator
 from typing import Dict
 
 
-class AgendaUpdateRequest(BaseModel):
+class AgendaTimesUpdateRequest(BaseModel):
     start: float = Query(ge=0)
     finish: float = Query(ge=0)
 
@@ -15,6 +15,11 @@ class AgendaUpdateRequest(BaseModel):
         ):
             raise ValueError("Finishing time must be greater thabn start time")
         return agenda_update_request_attributes
+
+
+class AgendaUpdateRequest(BaseModel):
+    agenda: Dict[str, AgendaTimesUpdateRequest]
+    google_meet_conference_enabled: bool
 
 
 class UpdatePhysicianValueRequest(BaseModel):

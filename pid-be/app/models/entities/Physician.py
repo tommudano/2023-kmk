@@ -18,6 +18,7 @@ class Physician:
     agenda: dict
     appointments: list
     appointment_value: int
+    google_meet_conference_enabled: bool
 
     def __init__(
         self,
@@ -28,6 +29,7 @@ class Physician:
         email: str,
         id: str,
         role: str = "physician",
+        google_meet_conference_enabled=False,
         appointment_value: int = None,
         agenda: dict = {},
         approved: str = "pending",
@@ -48,6 +50,7 @@ class Physician:
             if appointment_value
             else Specialty.get_by_name(self.specialty).value
         )
+        self.google_meet_conference_enabled = google_meet_conference_enabled
 
     @staticmethod
     def get_by_id(id):
@@ -174,8 +177,13 @@ class Physician:
         db.collection("appointments").document(id).update({"status": "denied"})
 
     @staticmethod
-    def update_agenda(id, agenda):
-        db.collection("physicians").document(id).update({"agenda": agenda})
+    def update_agenda(id, agenda, google_meet_conference_enabled):
+        db.collection("physicians").document(id).update(
+            {
+                "agenda": agenda,
+                "google_meet_conference_enabled": google_meet_conference_enabled,
+            }
+        )
 
     def update_appointment_value(self, new_value):
         specialty = Specialty.get_by_name(self.specialty)
@@ -212,6 +220,7 @@ class Physician:
                     "5": {"start": 8, "finish": 18},
                 },
                 "appointment_value": self.appointment_value,
+                "google_meet_conference_enabled": self.google_meet_conference_enabled,
             }
         )
         return self.id

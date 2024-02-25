@@ -1,5 +1,6 @@
 import time
 from pydantic import BaseModel, field_validator, root_validator
+from typing import Optional
 from fastapi import Query
 
 from app.models.entities.Physician import Physician
@@ -12,6 +13,7 @@ class AppointmentCreationRequest(BaseModel):
     physician_id: str = Query(
         description="The _physician_id_ must be the id of an existant physician"
     )
+    google_meet_conference: Optional[bool] = False
 
     @field_validator("date")
     def validate_date(cls, date_to_validate):
