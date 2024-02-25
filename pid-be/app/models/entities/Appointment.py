@@ -341,7 +341,7 @@ class Appointment:
         patient = Patient.get_by_id(self.patient_id)
         date = datetime.fromtimestamp(self.date)
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": "CANCELED_APPOINTMENT_DUE_TO_PHYSICIAN_DENIAL",
                 "data": {
