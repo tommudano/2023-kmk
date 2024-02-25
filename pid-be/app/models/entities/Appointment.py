@@ -309,6 +309,7 @@ class Appointment:
                 "status": "closed",
             }
         )
+        Physician.free_agenda(self.physician_id, self.date)
         db.collection("patientsPendingToScore").document(self.patient_id).set(
             {self.id: True}
         )
