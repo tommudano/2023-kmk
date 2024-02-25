@@ -223,7 +223,8 @@ def update_physicians_agenda(
             google_meet_conference_enabled=agenda_update_request.google_meet_conference_enabled,
         )
         return {"message": "Agenda updated successfully"}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

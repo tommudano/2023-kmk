@@ -233,7 +233,8 @@ def get_user_roles(user_id=Depends(Auth.is_logged_in)):
         if Physician.is_physician(user_id):
             roles.append("physician")
         return {"roles": roles}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -270,7 +271,8 @@ def get_user_info(user_id=Depends(Auth.is_logged_in)):
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -385,7 +387,8 @@ def add_score(add_score_request: LoadScoreRequest, uid=Depends(Auth.is_logged_in
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -481,7 +484,8 @@ def show_score(
         print(score_averages)
 
         return {"score_metrics": score_averages}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -523,7 +527,8 @@ def pending_scores(user_id=Depends(Auth.is_logged_in)):
             pending_scores.append(appointment)
 
         return {"pending_scores": pending_scores}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

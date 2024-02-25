@@ -36,7 +36,8 @@ def get_all_blood_types():
     try:
         blood_types = BloodType.get_all()
         return {"blood_types": blood_types}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

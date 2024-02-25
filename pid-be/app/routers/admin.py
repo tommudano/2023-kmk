@@ -215,7 +215,8 @@ def get_all_pending_validations(uid=Depends(Auth.is_admin)):
     try:
         physicians_to_validate = Physician.get_pending_physicians()
         return {"physicians_pending_validation": physicians_to_validate}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -246,7 +247,8 @@ def get_all_working_physicians(uid=Depends(Auth.is_admin)):
     try:
         physicians_working = Physician.get_physicians_working()
         return {"physicians_working": physicians_working}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -415,7 +417,8 @@ def update_specialty_value(
 def get_admin_user_info(user_id=Depends(Auth.is_admin)):
     try:
         return Admin.get_by_id(user_id)
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
