@@ -35,6 +35,7 @@ specialties = [
 ]
 
 valid_physician_id = "validphysicianid"
+non_virtual_valid_physician_id = "nonvirtualvalidphysicianid"
 pending_physician_id = "pendingphysicianid"
 denied_physician_id = "deniedphysicianid"
 
@@ -112,6 +113,21 @@ def create_and_delete_physicians(load_and_delete_specialties):
             "tuition": "A111",
             "specialty": specialties[0],
             "email": "docdocson@postappointments.com",
+            "google_meet_conference_enabled": True,
+        }
+    )
+    db.collection("physicians").document(non_virtual_valid_physician_id).set(
+        {
+            "role": "physician",
+            "id": non_virtual_valid_physician_id,
+            "first_name": "Doc",
+            "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
+            "approved": "approved",
+            "last_name": "docson",
+            "tuition": "A111",
+            "specialty": specialties[0],
+            "email": "docdocson2@postappointments.com",
+            "google_meet_conference_enabled": False,
         }
     )
     db.collection("physicians").document(pending_physician_id).set(
@@ -125,6 +141,7 @@ def create_and_delete_physicians(load_and_delete_specialties):
             "tuition": "A111",
             "specialty": specialties[0],
             "email": "docdocson@postappointments.com",
+            "google_meet_conference_enabled": False,
         }
     )
     db.collection("physicians").document(denied_physician_id).set(
@@ -138,10 +155,12 @@ def create_and_delete_physicians(load_and_delete_specialties):
             "tuition": "A111",
             "specialty": specialties[0],
             "email": "docdocson@postappointments.com",
+            "google_meet_conference_enabled": False,
         }
     )
     yield
     db.collection("physicians").document(valid_physician_id).delete()
+    db.collection("physicians").document(non_virtual_valid_physician_id).delete()
     db.collection("physicians").document(pending_physician_id).delete()
     db.collection("physicians").document(denied_physician_id).delete()
 
@@ -217,6 +236,8 @@ def test_returned_id_is_the_id_of_the_created_appointment():
     assert created_appointment["id"] == appointment_id
     assert type(created_appointment["created_at"]) == int
     assert created_appointment["patient_id"] == a_KMK_user_information["uid"]
+    assert created_appointment["appointment_value"] == 3500
+    assert created_appointment["google_meet_conference"] == False
 
 
 def test_invalid_date_format_in_appointment_creation_endpoint_returns_a_422_Code():
@@ -410,52 +431,6 @@ def test_creating_two_appointments_for_the_same_physician_in_the_same_valid_date
     assert response_to_appointment_creation_endpoint.status_code == 422
 
 
-# def test_non_patient_creating_appointment_returns_403_code_and_message():
-#     physician_info = {
-#         "role": "physician",
-#         "name": "Doc",
-#         "last_name": "Docson the Fourth",
-#         "tuition": "11110010",
-#         "specialty": specialties[0],
-#         "email": "doc@thedoc.com",
-#         "password": "123456",
-#     }
-
-#     created_user = auth.create_user(
-#         **{
-#             "email": physician_info["email"],
-#             "password": physician_info["password"],
-#         }
-#     )
-#     pytest.physician_uid = created_user.uid
-#     db.collection("physicians").document(pytest.physician_uid).set(
-#         {**physician_info, "approved": "approved"}
-#     )
-
-#     physicians_token = client.post(
-#         "/users/login",
-#         json={"email": physician_info["email"], "password": physician_info["password"]},
-#     ).json()["token"]
-
-#     mocked_response = requests.Response()
-#     mocked_response.status_code = 200
-#     with patch("requests.post", return_value=mocked_response) as mocked_request:
-#         response_to_appointment_creation_endpoint = client.post(
-#             "/appointments",
-#             json=appointment_data,
-#             headers={"Authorization": f"Bearer {physicians_token}"},
-#         )
-
-#     assert response_to_appointment_creation_endpoint.status_code == 403
-#     assert (
-#         response_to_appointment_creation_endpoint.json()["detail"]
-#         == "Only patients can create appointments"
-#     )
-
-#     auth.delete_user(pytest.physician_uid)
-#     db.collection("physicians").document(pytest.physician_uid).delete()
-
-
 def test_appointment_creation_with_a_pending_physician_returns_a_422_code_and_a_detail():
     response_to_appointment_creation_endpoint = client.post(
         "/appointments",
@@ -476,7 +451,7 @@ def test_appointment_creation_with_a_denied_physician_returns_a_422_code_and_a_d
     assert response_to_appointment_creation_endpoint.status_code == 422
 
 
-def test_register_endpoint_triggers_notification():
+def test_post_appointments_endpoint_triggers_notification():
     mocked_response = requests.Response()
     mocked_response.status_code = 200
     with patch("requests.post", return_value=mocked_response) as mocked_request:
@@ -486,4 +461,61 @@ def test_register_endpoint_triggers_notification():
             headers={"Authorization": f"Bearer {pytest.bearer_token}"},
         )
 
+    args, kwargs = mocked_request.call_args
+    assert kwargs["json"]["type"] == "PENDING_APPOINTMENT"
+    assert mocked_request.call_count == 1
+
+
+def test_appointment_creation_for_virtual_apppointment_for_a_vitual_physician_is_valid():
+    mocked_response = requests.Response()
+    mocked_response.status_code = 200
+    with patch("requests.post", return_value=mocked_response) as mocked_request:
+        response_to_appointment_creation_endpoint = client.post(
+            "/appointments",
+            json={**appointment_data, "google_meet_conference": True},
+            headers={"Authorization": f"Bearer {pytest.bearer_token}"},
+        )
+
+    assert response_to_appointment_creation_endpoint.status_code == 201
+    appointment_id = response_to_appointment_creation_endpoint.json()["appointment_id"]
+
+    created_appointment = (
+        db.collection("appointments").document(appointment_id).get().to_dict()
+    )
+    assert created_appointment["google_meet_conference"] == True
+
+
+def test_appointment_creation_for_virtual_apppointment_for_a_non_vitual_physician_is_invalid():
+    mocked_response = requests.Response()
+    mocked_response.status_code = 200
+    with patch("requests.post", return_value=mocked_response) as mocked_request:
+        response_to_appointment_creation_endpoint = client.post(
+            "/appointments",
+            json={
+                **appointment_data,
+                "physician_id": non_virtual_valid_physician_id,
+                "google_meet_conference": True,
+            },
+            headers={"Authorization": f"Bearer {pytest.bearer_token}"},
+        )
+
+    assert response_to_appointment_creation_endpoint.status_code == 400
+    assert (
+        response_to_appointment_creation_endpoint.json()["detail"]
+        == "El medico no acepta videoconferencias por meet gestionadas a traves de la app"
+    )
+
+
+def test_post_appointments_endpoint_triggers_notification_for_virtual_option():
+    mocked_response = requests.Response()
+    mocked_response.status_code = 200
+    with patch("requests.post", return_value=mocked_response) as mocked_request:
+        client.post(
+            "/appointments",
+            json={**appointment_data, "google_meet_conference": True},
+            headers={"Authorization": f"Bearer {pytest.bearer_token}"},
+        )
+
+    args, kwargs = mocked_request.call_args
+    assert kwargs["json"]["type"] == "PENDING_VIRTUAL_APPOINTMENT"
     assert mocked_request.call_count == 1

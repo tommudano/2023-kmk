@@ -31,6 +31,10 @@ const DashboardPatient = () => {
     const [disabledAppointmentButton, setDisabledAppointmentButton] =
         useState(false);
     const [physicianScores, setPhysicianScores] = useState([]);
+    const [
+        googleMeetConferenceForAppointment,
+        setGoogleMeetConferenceForAppointment,
+    ] = useState(false);
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -142,6 +146,7 @@ const DashboardPatient = () => {
                 {
                     physician_id: selectedDoctorId,
                     date: Math.round(date.getTime() / 1000),
+                    google_meet_conference: googleMeetConferenceForAppointment,
                 },
                 {
                     httpsAgent: agent,
@@ -149,10 +154,12 @@ const DashboardPatient = () => {
             );
             toast.success("Turno solicitado. Aguarde aprobacion del mismo");
             setSelectedDoctorId("");
+            setSelectedDoctor({});
             setDate(new Date());
             setSelectedSpecialty("");
             setPhysiciansAgenda({});
             setPhysicianScores([]);
+            setGoogleMeetConferenceForAppointment(false);
         } catch (error) {
             if (error.response.status === 500)
                 toast.error("Error al solicitar turno");
@@ -378,8 +385,10 @@ const DashboardPatient = () => {
                                                     time.getMinutes() / 60;
                                                 return (
                                                     workingHour &&
-                                                    workingHour.start_time &&
-                                                    workingHour.finish_time &&
+                                                    workingHour.start_time !==
+                                                        undefined &&
+                                                    workingHour.finish_time !==
+                                                        undefined &&
                                                     workingHour.start_time <=
                                                         parsedTime &&
                                                     workingHour.finish_time >
@@ -390,6 +399,35 @@ const DashboardPatient = () => {
                                         }}
                                     />
                                 </div>
+                                {selectedDoctor.google_meet_conference_enabled ? (
+                                    <div
+                                        className={
+                                            styles["schedule-day-modify"]
+                                        }
+                                    >
+                                        <input
+                                            type='checkbox'
+                                            id='googleMeet'
+                                            name='googleMeet'
+                                            defaultChecked={
+                                                googleMeetConferenceForAppointment
+                                            }
+                                            className={styles["checkbox-input"]}
+                                            onChange={(e) =>
+                                                setGoogleMeetConferenceForAppointment(
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                        <label
+                                            htmlFor='googleMeet'
+                                            className={styles["checkbox-label"]}
+                                        >
+                                            {"    "}¿Deseas tener la consulta a
+                                            traves de Google Meet?
+                                        </label>
+                                    </div>
+                                ) : null}
                             </div>
 
                             <button

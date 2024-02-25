@@ -430,6 +430,7 @@ def test_register_physician_sets_information_object_in_firestore():
     )
     assert physician_object_from_firestore["approved"] == "pending"
     assert physician_object_from_firestore["appointment_value"] == 3500
+    assert physician_object_from_firestore["google_meet_conference_enabled"] == False
 
 
 def test_register_physician_with_invalid_specialty_returns_a_422_code():

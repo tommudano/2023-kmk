@@ -10,6 +10,9 @@ import validator from "validator";
 import { Footer, Header, PhysicianTabBar } from "../components/header";
 import { toast } from "react-toastify";
 import ValueModal from "../components/ValueModal";
+import InfoIcon from "@mui/icons-material/Info";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
 const UserProfile = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +45,8 @@ const UserProfile = () => {
     const [activeSubTab, setActiveSubTab] = useState("tab1");
     const [showValueModal, setShowValueModal] = useState(false);
     const [newValue, setNewValue] = useState(undefined);
+    const [googleMeetServiceEnabled, setGoogleMeetServiceEnabled] =
+        useState(false);
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -106,6 +111,9 @@ const UserProfile = () => {
             console.log(userData);
 
             setUser(userData);
+            setGoogleMeetServiceEnabled(
+                response.data.google_meet_conference_enabled
+            );
             getPhysicianScores(userData.id);
         } catch (error) {
             console.error(error);
@@ -211,13 +219,16 @@ const UserProfile = () => {
                 finish: user.agenda.working_hours[0].finish_time,
             };
             const response = await axios.put(`${apiURL}physicians/agenda`, {
-                0: payload0,
-                1: payload1,
-                2: payload2,
-                3: payload3,
-                4: payload4,
-                5: payload5,
-                6: payload6,
+                agenda: {
+                    0: payload0,
+                    1: payload1,
+                    2: payload2,
+                    3: payload3,
+                    4: payload4,
+                    5: payload5,
+                    6: payload6,
+                },
+                google_meet_conference_enabled: googleMeetServiceEnabled,
             });
             getUserData();
             toast.success("Horario de atención actualizado exitosamente.");
@@ -478,6 +489,48 @@ const UserProfile = () => {
                         {activeSubTab === "tab2" ? (
                             <div className={styles.form}>
                                 {/* Modificar horario de atencion */}
+                                <h3 className={styles["title"]}>
+                                    Servicio de Google Meet
+                                </h3>
+
+                                <div className='horario'>
+                                    <div
+                                        className={
+                                            styles["schedule-day-modify"]
+                                        }
+                                    >
+                                        <input
+                                            type='checkbox'
+                                            id='googleMeet'
+                                            name='googleMeet'
+                                            className={styles["checkbox-input"]}
+                                            defaultChecked={
+                                                googleMeetServiceEnabled
+                                            }
+                                            onChange={(e) =>
+                                                setGoogleMeetServiceEnabled(
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                        <label
+                                            htmlFor='googleMeet'
+                                            className={styles["checkbox-label"]}
+                                        >
+                                            {"    "}¿Tiene el servicio de Google
+                                            Meet habilitado?
+                                            <Tooltip
+                                                title='Al habilitar el servicio de Google Meet, los pacientes podran solicitar turnos que seran realizados a traves de dicha plataforma.'
+                                                placement='right'
+                                            >
+                                                <IconButton>
+                                                    <InfoIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div className={styles["title"]}>
                                     Horario de Atención
                                 </div>

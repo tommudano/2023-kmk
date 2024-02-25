@@ -1,7 +1,6 @@
 import os
 import requests
 from datetime import datetime
-from typing import Dict
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -27,6 +26,7 @@ from app.models.responses.AppointmentResponses import (
     AllAppointmentsResponse,
     GetAppointmentError,
 )
+from app.helpers.GoogleAPIHandler import GoogleAPIHandler
 
 router = APIRouter(
     prefix="/physicians",
@@ -102,6 +102,12 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
         appointment = Appointment.get_by_id(appointment_id)
         patient = Patient.get_by_id(appointment.patient_id)
         physician = Physician.get_by_id(appointment.physician_id)
+        if appointment.google_meet_conference:
+            meet_link, event_id = GoogleAPIHandler.create_event(
+                appointment, physician, patient
+            )
+            appointment.add_event_information(meet_link, event_id)
+
         date = datetime.fromtimestamp(appointment.date)
         requests.post(
             os.environ.get("NOTIFICATIONS_API_URL"),
@@ -203,13 +209,19 @@ def get_all_pending_appointments(uid=Depends(Auth.is_logged_in)):
 
 @router.put("/agenda", status_code=status.HTTP_200_OK)
 def update_physicians_agenda(
-    agenda_update_request: Dict[str, AgendaUpdateRequest],
+    agenda_update_request: AgendaUpdateRequest,
     uid=Depends(Auth.is_logged_in),
 ):
     try:
-        for day in agenda_update_request:
-            agenda_update_request[day] = agenda_update_request[day].model_dump()
-        Physician.update_agenda(id=uid, agenda=agenda_update_request)
+        for day in agenda_update_request.agenda:
+            agenda_update_request.agenda[day] = agenda_update_request.agenda[
+                day
+            ].model_dump()
+        Physician.update_agenda(
+            id=uid,
+            agenda=agenda_update_request.agenda,
+            google_meet_conference_enabled=agenda_update_request.google_meet_conference_enabled,
+        )
         return {"message": "Agenda updated successfully"}
     except:
         return JSONResponse(

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import styles from "../styles/styles.module.css";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faVideo } from "@fortawesome/free-solid-svg-icons";
 
 const PhysiciansAppointment = ({
     appointment,
@@ -32,6 +34,17 @@ const PhysiciansAppointment = ({
                 {new Date(appointment.date * 1000).toLocaleString("es-AR")}
             </p>
             <p>Valor de la consulta: ${appointment.appointment_value}</p>
+
+            {appointment.google_meet_conference ? (
+                <p style={{ fontStyle: "italic" }}>
+                    {" "}
+                    <FontAwesomeIcon
+                        icon={faVideo}
+                        className={styles["meet-icon"]}
+                    />
+                    Esta consulta es a traves de Google Meet{" "}
+                </p>
+            ) : null}
             <div className={styles["appointment-buttons-container"]}>
                 {handleOpenAppointmentClosureModal ? (
                     <button
@@ -70,6 +83,14 @@ const PhysiciansAppointment = ({
                             disabled={buttonsDisabled}
                         >
                             Ver Historia Clinica
+                        </button>
+                    </Link>
+                ) : null}
+
+                {handleOpenAppointmentClosureModal && appointment.meet_link ? (
+                    <Link href={appointment.meet_link} target='_blank'>
+                        <button className={styles["meet-button"]}>
+                            Unirse con Google Meet
                         </button>
                     </Link>
                 ) : null}

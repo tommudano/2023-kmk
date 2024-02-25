@@ -14,8 +14,10 @@ class CompletePhysicianResponse(BaseModel):
     tuition: str
     agenda: AgendaResponse
     appointment_value: int
+    google_meet_conference_enabled: bool
 
     def __init__(self, **data):
+        print("RESPONSE", data)
         data = {
             **PhysicianResponse(**data).__dict__,
             "specialty": SpecialtyResponse(**data),
@@ -32,6 +34,7 @@ class PhysicianResponse(BaseModel):
     tuition: str
     agenda: AgendaResponse
     appointment_value: int
+    google_meet_conference_enabled: bool
 
     def __init__(self, **data):
         data["agenda"] = AgendaResponse(

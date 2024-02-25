@@ -109,6 +109,21 @@ def test_email_template_handler_generates_correct_HTML_for_pending_to_approve_ap
     )
 
 
+def test_email_template_handler_generates_correct_HTML_for_pending_to_approve_virtual_appointment():
+    template_handler = TemplateHandler(
+        **{
+            "type": "PENDING_VIRTUAL_APPOINTMENT",
+            "data": {**patient_account_data, **date_data},
+        }
+    )
+    generated_template = template_handler.generate_template()
+    with open("app/models/email_templates/PendingVirtualAppointment.html", "r") as fp:
+        expected_template = fp.read()
+    assert generated_template == expected_template.format(
+        **{**patient_account_data, **date_data}
+    )
+
+
 def test_email_template_handler_generates_correct_HTML_for_updated_appointment():
     template_handler = TemplateHandler(
         **{
