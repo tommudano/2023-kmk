@@ -45,7 +45,8 @@ def get_record(patient_id):
     try:
         record = Record.get_by_id(patient_id)
         return {"record": record}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -78,7 +79,8 @@ def get_my_record(patient_id=Depends(Auth.is_logged_in)):
         record = Record.get_by_id(patient_id)
         print(record)
         return {"record": record}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -112,13 +114,14 @@ def update_record(
     """
     try:
         print(observation_creation_request)
-        appointment = Appointment.get_by_id(
-            observation_creation_request.appointment_id)
+        appointment = Appointment.get_by_id(observation_creation_request.appointment_id)
         print(appointment.patient_id)
         record = Record.add_observation(
-            appointment.patient_id, observation_creation_request.dict(),uid)
+            appointment.patient_id, observation_creation_request.dict(), uid
+        )
         return {"record": record}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

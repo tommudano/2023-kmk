@@ -146,7 +146,8 @@ def get_all_appointments(uid=Depends(Auth.is_logged_in)):
         return {"appointments": appointments}
     except HTTPException as http_exception:
         raise http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -179,7 +180,8 @@ def get_all_pending_appointments(uid=Depends(Auth.is_logged_in)):
         return {"appointments": appointments}
     except HTTPException as http_exception:
         raise http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -214,7 +216,8 @@ def get_all_appointments_for_physician(uid=Depends(Auth.is_logged_in)):
 
     except HTTPException as http_exception:
         raise http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

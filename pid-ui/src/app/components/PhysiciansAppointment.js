@@ -3,6 +3,9 @@ import styles from "../styles/styles.module.css";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVideo } from "@fortawesome/free-solid-svg-icons";
+import InfoIcon from "@mui/icons-material/Info";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
 const PhysiciansAppointment = ({
     appointment,
@@ -42,7 +45,15 @@ const PhysiciansAppointment = ({
                         icon={faVideo}
                         className={styles["meet-icon"]}
                     />
-                    Esta consulta es a traves de Google Meet{" "}
+                    Esta consulta es a traves de Google Meet
+                    <Tooltip
+                        title='La sala de reuniones estara habilitada 15 minutos antes de la consulta.'
+                        placement='right'
+                    >
+                        <IconButton>
+                            <InfoIcon />
+                        </IconButton>
+                    </Tooltip>
                 </p>
             ) : null}
             <div className={styles["appointment-buttons-container"]}>

@@ -102,7 +102,8 @@ def get_physician_dashboard(uid=Depends(Auth.is_logged_in)):
                 "updated_appointments": updated_appointments_per_month,
             }
         }
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
