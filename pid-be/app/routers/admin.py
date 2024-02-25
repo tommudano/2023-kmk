@@ -76,7 +76,7 @@ async def approve_physician(physician_id: str, uid=Depends(Auth.is_admin)):
         Admin.approve_physician(physician_id)
         physician = Physician.get_by_id(physician_id)
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": "PHYSICIAN_APPROVED_ACCOUNT",
                 "data": {
@@ -125,7 +125,7 @@ async def deny_physician(physician_id: str, uid=Depends(Auth.is_admin)):
         physician = Physician.get_by_id(physician_id)
         Admin.deny_physician(physician_id)
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": "PHYSICIAN_DENIED_ACCOUNT",
                 "data": {
@@ -174,7 +174,7 @@ async def unblock_physician(physician_id: str, uid=Depends(Auth.is_admin)):
         physician = Physician.get_blocked_by_id(physician_id)
         Admin.unblock_physician(physician)
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": "PHYSICIAN_UNBLOCKED_ACCOUNT",
                 "data": {
@@ -391,7 +391,7 @@ def update_specialty_value(
     physicians_for_given_specialty = Physician.get_approved_by_specialty(specialty_name)
     for physician in physicians_for_given_specialty:
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": "NEW_SPECIALTY_VALUE",
                 "data": {

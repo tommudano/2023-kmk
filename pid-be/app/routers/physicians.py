@@ -110,7 +110,7 @@ async def approve_appointment(appointment_id: str, uid=Depends(Auth.is_logged_in
 
         date = datetime.fromtimestamp(appointment.date)
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": (
                     "APPROVED_APPOINTMENT"
