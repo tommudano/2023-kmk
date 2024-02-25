@@ -520,9 +520,9 @@ def pending_scores(user_id=Depends(Auth.is_logged_in)):
         for appointment in appointments:
             physician = Physician.get_by_id(appointment["physician_id"])
             physician_info = {
-                "first_name": physician["first_name"],
-                "last_name": physician["last_name"],
-                "specialty": physician["specialty"],
+                "first_name": physician.first_name,
+                "last_name": physician.last_name,
+                "specialty": physician.specialty,
             }
             appointment.update(physician_info)
             pending_scores.append(appointment)
