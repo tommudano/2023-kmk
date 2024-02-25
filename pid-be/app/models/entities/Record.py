@@ -38,10 +38,8 @@ class Record:
     def add_observation(id, observation, uid):
         record_ref = db.collection("records").document(id)
         physician = Physician.get_by_id(uid)
-        observation["physician"] = (
-            physician["first_name"] + " " + physician["last_name"]
-        )
-        observation["specialty"] = physician["specialty"]
+        observation["physician"] = physician.first_name + " " + physician.last_name
+        observation["specialty"] = physician.specialty
         observation["observation"] = observation["observation"]
         observation["attended"] = observation["attended"]
         observation["real_start_time"] = observation["real_start_time"]
