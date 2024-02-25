@@ -236,7 +236,7 @@ const UserProfile = () => {
                                         {error}
                                     </div>
                                 )}
-                                {password !== confirmNewPassword && (
+                                {newPassword !== confirmNewPassword && (
                                     <div className={styles["error-message"]}>
                                         Las contraseñas no coinciden.
                                     </div>
