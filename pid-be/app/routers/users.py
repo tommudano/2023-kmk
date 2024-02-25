@@ -186,7 +186,7 @@ async def register(
         )
         physician.create()
     requests.post(
-        os.environ.get("NOTIFICATIONS_API_URL"),
+        os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
         json={
             "type": (
                 "PATIENT_REGISTERED_ACCOUNT"
@@ -337,7 +337,7 @@ def change_password(
     if login_response.status_code == 200:
         auth.update_user(uid, **{"password": change_password_request.new_password})
         requests.post(
-            os.environ.get("NOTIFICATIONS_API_URL"),
+            os.environ.get("NOTIFICATIONS_API_URL") + "/emails/send",
             json={
                 "type": "PASSWORD_CHANGED",
                 "data": {
