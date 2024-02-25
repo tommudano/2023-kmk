@@ -29,6 +29,7 @@ const Registro = () => {
     const [blood_types, setBloodTypes] = useState([]);
     const [blood_type, setBloodType] = useState("");
     const [disabledRegisterButton, setDisabledRegisterButton] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -295,7 +296,7 @@ const Registro = () => {
                 <div className={styles["form-group"]}>
                     <label htmlFor='password'>Contraseña</label>
                     <input
-                        type='password'
+                        type={showPassword ? "text" : "password"}
                         id='password'
                         value={password}
                         onChange={(e) => {
@@ -308,7 +309,7 @@ const Registro = () => {
                 <div className={styles["form-group"]}>
                     <label htmlFor='confirmPassword'>Repetir Contraseña</label>
                     <input
-                        type='password'
+                        type={showPassword ? "text" : "password"}
                         id='confirmPassword'
                         value={confirmPassword}
                         onChange={(e) => {
@@ -326,6 +327,17 @@ const Registro = () => {
                         Las contraseñas no coinciden.
                     </div>
                 )}
+                <div style={{ alignSelf: "start" }}>
+                    <input
+                        id='showPassword'
+                        name='showPassword'
+                        type='checkbox'
+                        style={{ all: "revert" }}
+                        value={showPassword}
+                        onChange={() => setShowPassword((prev) => !prev)}
+                    />
+                    <label htmlFor='showPassword'>Mostrar Contraseña</label>
+                </div>
                 <button
                     type='submit'
                     className={`${styles["button"]} ${
