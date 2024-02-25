@@ -13,7 +13,7 @@ from app.routers import emails
 load_dotenv()
 
 
-CTX_PORT: int = int(os.environ.get("PORT")) if os.environ.get("PORT") else 9000
+CTX_PORT: int = int(os.environ.get("PORT")) if os.environ.get("PORT") else 8080
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url="/api/openapi.json")
 

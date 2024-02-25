@@ -356,9 +356,24 @@ const DashboardPatient = () => {
                                         inline
                                         filterDate={(date) => {
                                             if (physiciansAgenda.working_days) {
-                                                return physiciansAgenda.working_days.includes(
-                                                    date.getDay()
-                                                );
+                                                if (
+                                                    physiciansAgenda.working_days.includes(
+                                                        date.getDay()
+                                                    )
+                                                ) {
+                                                    let workingHour =
+                                                        physiciansAgenda.working_hours.filter(
+                                                            (workingHour) =>
+                                                                workingHour.day_of_week ===
+                                                                date.getDay()
+                                                        )[0];
+                                                    return (
+                                                        workingHour.start_time !==
+                                                            0 &&
+                                                        workingHour.finish_time !==
+                                                            0
+                                                    );
+                                                }
                                             }
                                             return false;
                                         }}
