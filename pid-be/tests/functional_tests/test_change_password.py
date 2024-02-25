@@ -81,7 +81,7 @@ def test_change_password_endpoint_returns_a_message():
 
     assert (
         response_from_change_password_endpoint.json()["message"]
-        == "Password changed successfully"
+        == "Contraseña cambiada exitosamente"
     )
 
 
@@ -248,7 +248,7 @@ def test_change_password_endpoint_returns_a_400_code_and_message_if_current_pass
     assert response_from_change_password_endpoint.status_code == 400
     assert (
         response_from_change_password_endpoint.json()["detail"]
-        == "Invalid current password"
+        == "Contraseña actual incorrecta"
     )
 
 

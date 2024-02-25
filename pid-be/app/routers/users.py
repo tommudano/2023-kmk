@@ -326,13 +326,14 @@ def change_password(
     """
     user = auth.get_user(uid)
     url = os.environ.get("LOGIN_URL")
+    print(user.email, change_password_request.current_password)
     login_response = requests.post(
         url,
         json={
             "email": user.email,
             "password": change_password_request.current_password,
         },
-        params={"key": os.environ.get("apiKey")},
+        params={"key": os.environ.get("API_KEY")},
     )
     if login_response.status_code == 200:
         auth.update_user(uid, **{"password": change_password_request.new_password})
@@ -345,10 +346,10 @@ def change_password(
                 },
             },
         )
-        return {"message": "Password changed successfully"}
+        return {"message": "Contraseña cambiada exitosamente"}
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": "Invalid current password"},
+        content={"detail": "Contraseña actual incorrecta"},
     )
 
 
