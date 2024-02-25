@@ -24,6 +24,7 @@ const UserProfile = () => {
     const [error, setError] = useState("");
     const [activeSubTab, setActiveSubTab] = useState("tab1");
     const [patientScores, setPatientScores] = useState([]);
+    const [showPassword, setShowPassword] = useState(false);
 
     const agent = new https.Agent({
         rejectUnauthorized: false,
@@ -232,7 +233,9 @@ const UserProfile = () => {
                                         Contraseña Actual:
                                     </label>
                                     <input
-                                        type='password'
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
                                         id='currentPassword'
                                         value={password}
                                         onChange={(e) =>
@@ -247,7 +250,9 @@ const UserProfile = () => {
                                         Nueva Contraseña:
                                     </label>
                                     <input
-                                        type='password'
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
                                         id='newPassword'
                                         value={newPassword}
                                         onChange={(e) => {
@@ -263,7 +268,9 @@ const UserProfile = () => {
                                         Confirmar Nueva Contraseña:
                                     </label>
                                     <input
-                                        type='password'
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
                                         id='confirmNewPassword'
                                         value={confirmNewPassword}
                                         onChange={(e) => {
@@ -281,11 +288,26 @@ const UserProfile = () => {
                                         {error}
                                     </div>
                                 )}
-                                {password !== confirmNewPassword && (
+                                {newPassword !== confirmNewPassword && (
                                     <div className={styles["error-message"]}>
                                         Las contraseñas no coinciden.
                                     </div>
                                 )}
+                                <div>
+                                    <input
+                                        id='showPassword'
+                                        name='showPassword'
+                                        type='checkbox'
+                                        style={{ all: "revert" }}
+                                        value={showPassword}
+                                        onChange={() =>
+                                            setShowPassword((prev) => !prev)
+                                        }
+                                    />
+                                    <label htmlFor='showPassword'>
+                                        Mostrar Contraseña
+                                    </label>
+                                </div>
                                 <button
                                     type='submit'
                                     className={`${styles["standard-button"]} ${
