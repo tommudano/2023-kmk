@@ -36,7 +36,6 @@ a_KMK_physician_information = {
     "tuition": "777777",
     "specialty": specialties[0],
     "email": "testphysicianforupdatingappointments@kmk.com",
-    "password": "verySecurePassword123",
     "agenda": {str(number_of_day_of_week): {"start": 8.0, "finish": 18.5}},
 }
 
@@ -66,7 +65,10 @@ another_KMK_patient_information = {
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:
@@ -134,12 +136,16 @@ def create_physician_and_then_delete_him(log_in_another_patient):
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.physician_uid = created_user.uid
     db.collection("physicians").document(pytest.physician_uid).set(
-        {**a_KMK_physician_information, "approved": "approved"}
+        {
+            **a_KMK_physician_information,
+            "approved": "approved",
+            "id": pytest.physician_uid,
+        }
     )
     yield
     try:

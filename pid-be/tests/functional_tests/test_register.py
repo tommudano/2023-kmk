@@ -27,7 +27,7 @@ specialties = [
 
 a_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register",
+    "first_name": "Physician Test User Register",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
@@ -38,7 +38,7 @@ a_KMK_physician_information = {
 
 another_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register",
+    "first_name": "Physician Test User Register",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": specialties[0],
@@ -49,7 +49,7 @@ another_KMK_physician_information = {
 
 a_KMK_patient_information = {
     "role": "patient",
-    "name": "Patient Test User Register",
+    "first_name": "Patient Test User Register",
     "last_name": "Test Last Name",
     "email": "testpatientforregister@kmk.com",
     "password": "verySecurePassword123",
@@ -60,7 +60,7 @@ a_KMK_patient_information = {
 
 another_KMK_patient_information = {
     "role": "patient",
-    "name": "Patient Test User Register",
+    "first_name": "Patient Test User Register",
     "last_name": "Test Last Name",
     "email": "userforphysicianandpatient@kmk.com",
     "password": "verySecurePassword123",
@@ -99,7 +99,10 @@ def delete_test_physicians():
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:
@@ -169,7 +172,8 @@ def test_register_patient_sets_information_object_in_firestore():
     )
     assert type(patient_object_from_firestore["id"]) == str
     assert (
-        patient_object_from_firestore["first_name"] == a_KMK_patient_information["name"]
+        patient_object_from_firestore["first_name"]
+        == a_KMK_patient_information["first_name"]
     )
     assert (
         patient_object_from_firestore["last_name"]
@@ -202,7 +206,7 @@ def test_register_patient_with_empty_name_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": "",
+            "first_name": "",
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": a_KMK_patient_information["password"],
@@ -217,7 +221,7 @@ def test_register_patient_with_non_string_name_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": 123456,
+            "first_name": 123456,
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": a_KMK_patient_information["password"],
@@ -232,7 +236,7 @@ def test_register_patient_with_empty_last_name_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": "",
             "email": a_KMK_patient_information["email"],
             "password": a_KMK_patient_information["password"],
@@ -247,7 +251,7 @@ def test_register_patient_with_non_string_last_name_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": 123456,
             "email": a_KMK_patient_information["email"],
             "password": a_KMK_patient_information["password"],
@@ -262,7 +266,7 @@ def test_register_patient_with_invalid_email_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": a_KMK_patient_information["last_name"],
             "email": "notanemail",
             "password": a_KMK_patient_information["password"],
@@ -277,7 +281,7 @@ def test_register_patient_with_password_of_less_than_8_characters_returns_a_422_
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": "lT8",
@@ -295,7 +299,7 @@ def test_register_patient_with_password_with_no_uppercase_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": "nouppercase33",
@@ -313,7 +317,7 @@ def test_register_patient_with_password_with_no_lowercase_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": "NOLOWERCASE33",
@@ -331,7 +335,7 @@ def test_register_patient_with_password_with_no_numbers_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_patient_information["role"],
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": "noNUMBERS",
@@ -407,7 +411,7 @@ def test_register_physician_sets_information_object_in_firestore():
     )
     assert (
         physician_object_from_firestore["first_name"]
-        == a_KMK_physician_information["name"]
+        == a_KMK_physician_information["first_name"]
     )
     assert (
         physician_object_from_firestore["last_name"]
@@ -425,6 +429,8 @@ def test_register_physician_sets_information_object_in_firestore():
         == a_KMK_physician_information["specialty"]
     )
     assert physician_object_from_firestore["approved"] == "pending"
+    assert physician_object_from_firestore["appointment_value"] == 3500
+    assert physician_object_from_firestore["google_meet_conference_enabled"] == False
 
 
 def test_register_physician_with_invalid_specialty_returns_a_422_code():
@@ -432,7 +438,7 @@ def test_register_physician_with_invalid_specialty_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_physician_information["role"],
-            "name": a_KMK_physician_information["name"],
+            "first_name": a_KMK_physician_information["first_name"],
             "last_name": a_KMK_physician_information["last_name"],
             "email": a_KMK_physician_information["email"],
             "password": a_KMK_physician_information["password"],
@@ -449,7 +455,7 @@ def test_register_physician_with_missing_tuition_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_physician_information["role"],
-            "name": a_KMK_physician_information["name"],
+            "first_name": a_KMK_physician_information["first_name"],
             "last_name": a_KMK_physician_information["last_name"],
             "email": a_KMK_physician_information["email"],
             "password": a_KMK_physician_information["password"],
@@ -493,6 +499,7 @@ def test_register_user_as_physician_and_as_patient_is_invalid():
             json=another_KMK_patient_information,
         )
 
+    print("DATA TO REVIEW", response_to_register_endpoint_as_physician.json())
     assert response_to_register_endpoint_as_physician.status_code == 201
     assert response_to_register_endpoint_as_patient.status_code == 400
     assert (
@@ -512,7 +519,7 @@ def test_registration_with_invalid_role_returns_a_422_code():
         "/users/register",
         json={
             "role": "invalidrole",
-            "name": a_KMK_patient_information["name"],
+            "first_name": a_KMK_patient_information["first_name"],
             "last_name": a_KMK_patient_information["last_name"],
             "email": a_KMK_patient_information["email"],
             "password": a_KMK_patient_information["password"],
@@ -527,7 +534,7 @@ def test_register_physician_with_password_of_less_than_8_characters_returns_a_42
         "/users/register",
         json={
             "role": a_KMK_physician_information["role"],
-            "name": a_KMK_physician_information["name"],
+            "first_name": a_KMK_physician_information["first_name"],
             "last_name": a_KMK_physician_information["last_name"],
             "email": a_KMK_physician_information["email"],
             "password": "lT8",
@@ -544,7 +551,7 @@ def test_register_physician_with_password_with_no_uppercase_returns_a_422_code()
         "/users/register",
         json={
             "role": a_KMK_physician_information["role"],
-            "name": a_KMK_physician_information["name"],
+            "first_name": a_KMK_physician_information["first_name"],
             "last_name": a_KMK_physician_information["last_name"],
             "email": a_KMK_physician_information["email"],
             "password": "nouppercase33",
@@ -561,7 +568,7 @@ def test_register_physician_with_password_with_no_lowercase_returns_a_422_code()
         "/users/register",
         json={
             "role": a_KMK_physician_information["role"],
-            "name": a_KMK_physician_information["name"],
+            "first_name": a_KMK_physician_information["first_name"],
             "last_name": a_KMK_physician_information["last_name"],
             "email": a_KMK_physician_information["email"],
             "password": "NOLOWERCASE33",
@@ -578,7 +585,7 @@ def test_register_physician_with_password_with_no_numbers_returns_a_422_code():
         "/users/register",
         json={
             "role": a_KMK_physician_information["role"],
-            "name": a_KMK_physician_information["name"],
+            "first_name": a_KMK_physician_information["first_name"],
             "last_name": a_KMK_physician_information["last_name"],
             "email": a_KMK_physician_information["email"],
             "password": "noNUMBERS",

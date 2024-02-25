@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Union
+from typing import Union, Optional
 
 from .PhysicianResponses import PhysicianResponse
 from .PatientResponses import PatientResponse
@@ -52,10 +52,13 @@ class BasicAppointmentResponse(BaseModel):
     status: str = "pending"
     attended: Union[bool, None] = None
     start_time: Union[str, None] = None
+    appointment_value: int
+    google_meet_conference: bool
+    meet_link: Optional[str] = None
 
     def __init__(self, **data):
         physician = Physician.get_by_id(data["physician_id"])
-        data["physician"] = PhysicianResponse(**physician).model_dump()
+        data["physician"] = PhysicianResponse(**physician.__dict__).model_dump()
 
         patient = Patient.get_by_id(data["patient_id"])
         data["patient"] = PatientResponse(**patient).model_dump()

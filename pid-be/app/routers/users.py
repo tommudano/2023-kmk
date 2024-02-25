@@ -36,7 +36,7 @@ from app.models.requests.ScoreRequests import (
     LoadScoreRequest,
 )
 from app.models.responses.PatientResponses import PatientResponse
-from app.models.responses.PhysicianResponses import PhysicianResponse
+from app.models.responses.PhysicianResponses import CompletePhysicianResponse
 
 from app.models.entities.Auth import Auth
 from app.models.entities.Patient import Patient
@@ -100,12 +100,12 @@ async def login_user(
     elif login_response.status_code == 200:
         if Physician.is_physician(login_response.json()["localId"]):
             physician = Physician.get_by_id(login_response.json()["localId"])
-            if physician["approved"] == "denied" or physician["approved"] == "blocked":
+            if physician.approved == "denied" or physician.approved == "blocked":
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
                     content={"detail": "Account is not approved"},
                 )
-            elif physician["approved"] == "pending":
+            elif physician.approved == "pending":
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
                     content={"detail": "Account has to be approved by admin"},
@@ -188,11 +188,13 @@ async def register(
     requests.post(
         os.environ.get("NOTIFICATIONS_API_URL"),
         json={
-            "type": "PATIENT_REGISTERED_ACCOUNT"
-            if register_request.role == "patient"
-            else "PHYSICIAN_REGISTERED_ACCOUNT",
+            "type": (
+                "PATIENT_REGISTERED_ACCOUNT"
+                if register_request.role == "patient"
+                else "PHYSICIAN_REGISTERED_ACCOUNT"
+            ),
             "data": {
-                "name": register_request.name,
+                "name": register_request.first_name,
                 "last_name": register_request.last_name,
                 "email": register_request.email,
             },
@@ -231,7 +233,8 @@ def get_user_roles(user_id=Depends(Auth.is_logged_in)):
         if Physician.is_physician(user_id):
             roles.append("physician")
         return {"roles": roles}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -241,7 +244,7 @@ def get_user_roles(user_id=Depends(Auth.is_logged_in)):
 @router.get(
     "/user-info",
     status_code=status.HTTP_200_OK,
-    response_model=Union[PhysicianResponse, PatientResponse],
+    response_model=Union[CompletePhysicianResponse, PatientResponse],
     responses={
         401: {"model": UserInfoErrorResponse},
         403: {"model": UserInfoErrorResponse},
@@ -263,12 +266,13 @@ def get_user_info(user_id=Depends(Auth.is_logged_in)):
         if Patient.get_by_id(user_id):
             return Patient.get_by_id(user_id)
         if Physician.get_by_id(user_id):
-            return Physician.get_by_id(user_id)
+            return Physician.get_by_id(user_id).__dict__
         else:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -383,7 +387,8 @@ def add_score(add_score_request: LoadScoreRequest, uid=Depends(Auth.is_logged_in
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -479,7 +484,8 @@ def show_score(
         print(score_averages)
 
         return {"score_metrics": score_averages}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -521,7 +527,8 @@ def pending_scores(user_id=Depends(Auth.is_logged_in)):
             pending_scores.append(appointment)
 
         return {"pending_scores": pending_scores}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

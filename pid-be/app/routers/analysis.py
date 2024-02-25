@@ -36,7 +36,8 @@ async def upload_analysis(analysis: list[UploadFile], uid=Depends(Auth.is_logged
         return saved_analysis
     except HTTPException as http_exception:
         return http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -60,8 +61,10 @@ def get_all_analysis(uid=Depends(Auth.is_logged_in)):
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={"detail": "Only patients can view their analysis"},
             )
-        return Analysis.get_all_for(uid=uid)
-    except Exception:
+        all_analysis = Analysis.get_all_for(uid=uid)
+        return all_analysis
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -85,7 +88,8 @@ def get_all_analysis(patient_id: str, uid=Depends(Auth.is_logged_in)):
                 content={"detail": "Only physicians can view their analysis"},
             )
         return Analysis.get_all_for(uid=patient_id)
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -111,7 +115,8 @@ def delete_analysis(analysis_id: str, uid=Depends(Auth.is_logged_in)):
             status_code=http_exception.status_code,
             content={"detail": http_exception.detail},
         )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

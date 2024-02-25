@@ -59,8 +59,23 @@ async def create_appointment(
     * Return the appointments id.
     * Throw an error if appointment creation fails.
     """
+    physician = Physician.get_by_id(appointment_creation_request.physician_id)
+    if (
+        not physician.google_meet_conference_enabled
+        and appointment_creation_request.google_meet_conference
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "detail": "El medico no acepta videoconferencias por meet gestionadas a traves de la app"
+            },
+        )
     appointment = Appointment(
-        **{**appointment_creation_request.model_dump(), "patient_id": patient_id}
+        **{
+            **appointment_creation_request.model_dump(),
+            "patient_id": patient_id,
+            "appointment_value": physician.appointment_value,
+        }
     )
     try:
         appointment_id = appointment.create()
@@ -68,15 +83,18 @@ async def create_appointment(
             appointment_id=appointment_id, patient_score=[], physician_score=[]
         )
         score.create()
-        physician = Physician.get_by_id(appointment_creation_request.physician_id)
         patient = Patient.get_by_id(patient_id)
         date = datetime.fromtimestamp(appointment_creation_request.date)
         requests.post(
             os.environ.get("NOTIFICATIONS_API_URL"),
             json={
-                "type": "PENDING_APPOINTMENT",
+                "type": (
+                    "PENDING_APPOINTMENT"
+                    if not appointment_creation_request.google_meet_conference
+                    else "PENDING_VIRTUAL_APPOINTMENT"
+                ),
                 "data": {
-                    "email": physician["email"],
+                    "email": physician.email,
                     "name": patient["first_name"],
                     "last_name": patient["last_name"],
                     "day": date.day,
@@ -94,7 +112,8 @@ async def create_appointment(
             status_code=http_exception.status_code,
             content={"detail": http_exception.detail},
         )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -127,7 +146,8 @@ def get_all_appointments(uid=Depends(Auth.is_logged_in)):
         return {"appointments": appointments}
     except HTTPException as http_exception:
         raise http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -160,7 +180,8 @@ def get_all_pending_appointments(uid=Depends(Auth.is_logged_in)):
         return {"appointments": appointments}
     except HTTPException as http_exception:
         raise http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -195,7 +216,8 @@ def get_all_appointments_for_physician(uid=Depends(Auth.is_logged_in)):
 
     except HTTPException as http_exception:
         raise http_exception
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -243,7 +265,7 @@ def delete_appointment_by_id(id: str, uid=Depends(Auth.is_logged_in)):
             json={
                 "type": "CANCELED_APPOINTMENT",
                 "data": {
-                    "email": physician["email"],
+                    "email": physician.email,
                     "day": date.day,
                     "month": date.month,
                     "year": date.year,
@@ -310,8 +332,7 @@ def update_appointment(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={"detail": "Invalid appointment id"},
         )
-    appointment.update(update_appointment_request.model_dump())
-
+    appointment = appointment.update(update_appointment_request.model_dump())
     physician = Physician.get_by_id(appointment.physician_id)
     patient = Patient.get_by_id(uid)
     date = datetime.fromtimestamp(update_appointment_request.date)
@@ -320,7 +341,7 @@ def update_appointment(
         json={
             "type": "UPDATED_APPOINTMENT",
             "data": {
-                "email": physician["email"],
+                "email": physician.email,
                 "name": patient["first_name"],
                 "last_name": patient["last_name"],
                 "day": date.day,

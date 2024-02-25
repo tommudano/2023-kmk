@@ -27,6 +27,7 @@ today_date = datetime.fromtimestamp(round(time.time()))
 number_of_day_of_week = int(today_date.date().strftime("%w"))
 
 a_physician_information = {
+    "role": "physician",
     "id": "avalidid",
     "first_name": "Doc",
     "last_name": "Docson",
@@ -35,11 +36,25 @@ a_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "google_meet_conference_enabled": False,
 }
 
 
 @pytest.fixture(scope="module", autouse=True)
-def load_and_delete_physicians():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def load_and_delete_physicians(load_and_delete_specialties):
     created_user = auth.create_user(
         **{"email": a_physician_information["email"], "password": "verystrongpassword"}
     )
@@ -70,8 +85,11 @@ def test_request_to_physician_schedule_update_endpoint_returns_200_code():
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": 8, "finish": 19.5},
-            str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            "agenda": {
+                str(number_of_day_of_week): {"start": 8, "finish": 19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": True,
         },
     )
 
@@ -83,8 +101,11 @@ def test_request_to_physician_schedule_update_endpoint_returns_a_success_message
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": 8, "finish": 19.5},
-            str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            "agenda": {
+                str(number_of_day_of_week): {"start": 8, "finish": 19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": True,
         },
     )
 
@@ -99,8 +120,11 @@ def test_agenda_gets_changed():
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": 8, "finish": 19.5},
-            str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            "agenda": {
+                str(number_of_day_of_week): {"start": 8, "finish": 19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": True,
         },
     )
 
@@ -112,6 +136,7 @@ def test_agenda_gets_changed():
     assert physician_doc["agenda"][str(number_of_day_of_week)]["finish"] == 19.5
     assert physician_doc["agenda"][str((number_of_day_of_week + 1) % 7)]["start"] == 8
     assert physician_doc["agenda"][str((number_of_day_of_week + 1) % 7)]["finish"] == 9
+    assert physician_doc["google_meet_conference_enabled"] == True
 
 
 def test_agenda_gets_changed_by_removing_day():
@@ -119,7 +144,8 @@ def test_agenda_gets_changed_by_removing_day():
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": 8, "finish": 19.5},
+            "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 19.5}},
+            "google_meet_conference_enabled": False,
         },
     )
 
@@ -129,6 +155,7 @@ def test_agenda_gets_changed_by_removing_day():
     assert len(physician_doc["agenda"].keys()) == 1
     assert physician_doc["agenda"][str(number_of_day_of_week)]["start"] == 8
     assert physician_doc["agenda"][str(number_of_day_of_week)]["finish"] == 19.5
+    assert physician_doc["google_meet_conference_enabled"] == False
 
 
 def test_request_to_physician_schedule_update_with_finishing_time_less_than_initial_time_returns_422_code_and_detail():
@@ -136,8 +163,11 @@ def test_request_to_physician_schedule_update_with_finishing_time_less_than_init
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": 20, "finish": 19.5},
-            str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            "agenda": {
+                str(number_of_day_of_week): {"start": 20, "finish": 19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": True,
         },
     )
 
@@ -153,8 +183,11 @@ def test_request_to_physician_schedule_update_with_negative_finishing_time_retur
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": 0, "finish": -19.5},
-            str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            "agenda": {
+                str(number_of_day_of_week): {"start": 0, "finish": -19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": True,
         },
     )
 
@@ -170,8 +203,11 @@ def test_request_to_physician_schedule_update_with_negative_start_time_returns_4
         "/physicians/agenda",
         headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
         json={
-            str(number_of_day_of_week): {"start": -1, "finish": 19.5},
-            str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            "agenda": {
+                str(number_of_day_of_week): {"start": -1, "finish": 19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": False,
         },
     )
 
@@ -180,3 +216,19 @@ def test_request_to_physician_schedule_update_with_negative_start_time_returns_4
         response_from_physician_schedule_update_endpoint.json()["detail"]
         == "Invalid input format"
     )
+
+
+def test_request_to_physician_schedule_update_with_non_boolean_meet_conference_returns_422_code():
+    response_from_physician_schedule_update_endpoint = client.put(
+        "/physicians/agenda",
+        headers={"Authorization": f"Bearer {pytest.physician_bearer_token}"},
+        json={
+            "agenda": {
+                str(number_of_day_of_week): {"start": 1, "finish": 19.5},
+                str((number_of_day_of_week + 1) % 7): {"start": 8, "finish": 9},
+            },
+            "google_meet_conference_enabled": "something",
+        },
+    )
+
+    assert response_from_physician_schedule_update_endpoint.status_code == 422

@@ -1,12 +1,3 @@
-"""
-FLOW
----------
-1. Tenemos un paciente y un medico
-2. El paciente saca un turno con el medico
-3. El medico aprueba el turno
-4. El medico cierra el turno
-5. A partir del punto 4 el paciente no puede sacar turnos a menos que complete el turno
-"""
 import pytest
 import time
 from datetime import datetime, timedelta
@@ -55,7 +46,19 @@ an_appointment_data = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_test_user():
+def load_and_delete_specialties():
+    id = db.collection("specialties").document().id
+    db.collection("specialties").document(id).set(
+        {"id": id, "name": "surgeon", "value": 3500}
+    )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_test_user(load_and_delete_specialties):
     created_user = auth.create_user(**a_KMK_user_information)
     pytest.patient_uid = created_user.uid
 
@@ -105,6 +108,7 @@ def create_test_physician(create_another_test_user):
             "specialty": "surgeon",
             "approved": "approved",
             "tuition": "A111",
+            "role": "physician",
         }
     )
     yield

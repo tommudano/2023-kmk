@@ -40,7 +40,8 @@ def get_all_specialties():
     try:
         specialties = Specialty.get_all_names()
         return {"specialties": specialties}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -82,7 +83,8 @@ def add_specialty(
             status_code=http_exception.status_code,
             content={"detail": http_exception.detail},
         )
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},
@@ -118,7 +120,8 @@ def delete_specialty(
         Specialty.delete_specialty(specialty_name)
         updated_specialties = Specialty.get_all_names()
         return {"specialties": updated_specialties}
-    except:
+    except Exception as e:
+        print(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error"},

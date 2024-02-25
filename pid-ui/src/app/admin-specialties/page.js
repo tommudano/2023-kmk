@@ -112,7 +112,7 @@ const Admin = () => {
             fetchSpecialties();
         } catch (error) {
             console.error(error);
-            toast.error("Error al borrar especialidad");
+            toast.error("Error al actualizar el valor");
         }
     };
 
@@ -134,7 +134,9 @@ const Admin = () => {
                 confirmAction={handleChangeValue}
                 currentValue={selectedSpecialty.value}
                 setNewValue={setNewValue}
+                title={"Asignar un valor a la especialidad"}
                 message={`¿Cual es el nuevo valor de la especialidad ${selectedSpecialty.name}?`}
+                aclaration='Se le informara a todos los medicos de la especialidad del cambio'
             />
 
             <ConfirmationModal

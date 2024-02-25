@@ -62,17 +62,25 @@ other_KMK_user_information = {
 }
 
 a_KMK_physician_information = {
-    "display_name": "First KMK Test Physician",
     "email": "deleteApppointmentFirstTestPhysician@kmk.com",
-    "email_verified": True,
-    "password": "verySecurePassword123",
+    "role": "physician",
+    "first_name": "Doc",
+    "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
+    "approved": "approved",
+    "last_name": "docson",
+    "tuition": "A111",
+    "specialty": specialties[0],
 }
 
 another_KMK_physician_information = {
-    "display_name": "Second KMK Test Physician",
     "email": "deleteApppointmentSecondTestPhysician@kmk.com",
-    "email_verified": True,
-    "password": "verySecurePassword123",
+    "role": "physician",
+    "first_name": "Doc",
+    "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
+    "approved": "approved",
+    "last_name": "docson",
+    "tuition": "A111",
+    "specialty": specialties[0],
 }
 
 an_appointment_data = {
@@ -89,7 +97,20 @@ other_appointment_data = {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_users():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_users(load_and_delete_specialties):
     first_created_user = auth.create_user(**a_KMK_user_information)
     second_created_user = auth.create_user(**another_KMK_user_information)
     third_created_user = auth.create_user(**other_KMK_user_information)
@@ -104,26 +125,26 @@ def create_users():
 
 @pytest.fixture(autouse=True)
 def create_physicians(create_users):
-    first_created_physician = auth.create_user(**a_KMK_physician_information)
-    second_created_physician = auth.create_user(**another_KMK_physician_information)
+    first_created_physician = auth.create_user(
+        **{
+            "email": a_KMK_physician_information["email"],
+            "password": "verySecurePassword123",
+        }
+    )
+    second_created_physician = auth.create_user(
+        **{
+            "email": another_KMK_physician_information["email"],
+            "password": "verySecurePassword123",
+        }
+    )
     pytest.first_physician_id = first_created_physician.uid
     pytest.second_physician_id = second_created_physician.uid
 
     db.collection("physicians").document(pytest.first_physician_id).set(
-        {
-            **a_KMK_physician_information,
-            "specialty": specialties[0],
-            "approved": "approved",
-            "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
-        }
+        {**a_KMK_physician_information, "id": pytest.first_physician_id}
     )
     db.collection("physicians").document(pytest.second_physician_id).set(
-        {
-            **a_KMK_physician_information,
-            "specialty": specialties[0],
-            "approved": "approved",
-            "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
-        }
+        {**a_KMK_physician_information, "id": pytest.second_physician_id}
     )
     yield
     auth.delete_user(pytest.first_physician_id)
@@ -245,17 +266,7 @@ def create_test_environment(log_in_users):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def load_and_delete_specialties(log_in_users):
-    for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
-    yield
-    specilaties_doc = db.collection("specialties").list_documents()
-    for specialty_doc in specilaties_doc:
-        specialty_doc.delete()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def load_and_delete_specialties(log_in_users):
+def delete_specialties(log_in_users):
     yield
     appointment_docs = db.collection("appointments").list_documents()
     for appointment_doc in appointment_docs:
@@ -400,7 +411,7 @@ def test_delete_appointment_by_a_physician_by_the_physician_of_that_appointment_
         "/users/login",
         json={
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     with patch("requests.post", return_value=mocked_response) as mocked_request:
@@ -417,7 +428,7 @@ def test_delete_appointment_by_a_physician_of_a_valid_appointment_returns_a_mess
         "/users/login",
         json={
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     mocked_response = requests.Response()
@@ -444,7 +455,7 @@ def test_delete_appointment_by_a_physician_of_a_valid_appointment_removes_appoin
         "/users/login",
         json={
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     mocked_response = requests.Response()
@@ -466,7 +477,7 @@ def test_delete_appointment_by_a_physician_who_isnt_assigned_to_it_returns_a_400
         "/users/login",
         json={
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     mocked_response = requests.Response()
@@ -495,7 +506,7 @@ def test_appointment_deletion_removes_date_reccord_from_physicians_object_in_fir
         "/users/login",
         json={
             "email": another_KMK_physician_information["email"],
-            "password": another_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     mocked_response = requests.Response()

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 import styles from "../styles/styles.module.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faVideo } from "@fortawesome/free-solid-svg-icons";
+import Link from "next/link";
+import InfoIcon from "@mui/icons-material/Info";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 
 const PatientsAppointment = ({
     appointment,
@@ -33,6 +39,27 @@ const PatientsAppointment = ({
                 Fecha y hora:{" "}
                 {new Date(appointment.date * 1000).toLocaleString("es-AR")}
             </p>
+
+            <p>Costo de la consulta: ${appointment.appointment_value}</p>
+
+            {appointment.google_meet_conference ? (
+                <p style={{ fontStyle: "italic" }}>
+                    {" "}
+                    <FontAwesomeIcon
+                        icon={faVideo}
+                        className={styles["meet-icon"]}
+                    />
+                    Esta consulta es a traves de Google Meet
+                    <Tooltip
+                        title='La sala de reuniones estara habilitada 15 minutos antes de la consulta.'
+                        placement='right'
+                    >
+                        <IconButton>
+                            <InfoIcon />
+                        </IconButton>
+                    </Tooltip>
+                </p>
+            ) : null}
             <div className={styles["appointment-buttons-container"]}>
                 {handleOpenEditModal ? (
                     <button
@@ -48,6 +75,13 @@ const PatientsAppointment = ({
                     >
                         Modificar
                     </button>
+                ) : null}
+                {handleOpenEditModal && appointment.meet_link ? (
+                    <Link href={appointment.meet_link} target='_blank'>
+                        <button className={styles["meet-button"]}>
+                            Unirse con Google Meet
+                        </button>
+                    </Link>
                 ) : null}
                 {handleDeleteClick ? (
                     <button

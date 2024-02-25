@@ -1,5 +1,5 @@
 import pytest
-from firebase_admin import firestore, auth, storage
+from firebase_admin import firestore, auth
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -19,18 +19,37 @@ a_KMK_patient_information = {
 
 a_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": "surgeon",
     "email": "testphysicianforapproving@kmk.com",
-    "password": "verySecurePassword123",
-    "approved": "pending",
+    "approved": "approved",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
+}
+
+an_analysis_object = {
+    "id": "an_id",
+    "file_name": "a_name",
+    "uploaded_at": 123456,
+    "url": "http://test.test",
 }
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_test_patient_and_then_delete_him():
+def load_and_delete_specialties():
+    id = db.collection("specialties").document().id
+    db.collection("specialties").document(id).set(
+        {"id": id, "name": "surgeon", "value": 3500}
+    )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_test_patient_and_then_delete_him(load_and_delete_specialties):
     created_user = auth.create_user(
         **{
             "email": a_KMK_patient_information["email"],
@@ -63,12 +82,15 @@ def create_test_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.a_phisician_uid = created_user.uid
     db.collection("physicians").document(pytest.a_phisician_uid).set(
-        {**a_KMK_physician_information, "approved": "approved"}
+        {
+            **a_KMK_physician_information,
+            "id": pytest.a_phisician_uid,
+        }
     )
     yield
     auth.delete_user(pytest.a_phisician_uid)
@@ -81,36 +103,23 @@ def log_in_physician(create_test_physician_and_then_delete_him):
         "/users/login",
         json={
             "email": a_KMK_physician_information["email"],
-            "password": a_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     ).json()["token"]
     yield
 
 
 @pytest.fixture(scope="module", autouse=True)
-def add_files_to_storage_and_then_delete_them(log_in_patient):
-    files = {"analysis": open("tests/test_files/test_file.txt", "rb")}
-    client.post(
-        "/analysis",
-        headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"},
-        files=files,
-    )
+def create_document_instance(log_in_patient):
+    db.collection("analysis").document(pytest.a_patient_uid).collection(
+        "uploaded_analysis"
+    ).document(an_analysis_object["id"]).set(an_analysis_object)
     yield
-    bucket = storage.bucket()
-    blobs = bucket.list_blobs(prefix=f"analysis/{pytest.a_patient_uid}")
-    for blob in blobs:
-        blob.delete()
-    for file_information_doc in (
-        db.collection("analysis")
-        .document(pytest.a_patient_uid)
-        .collection("uploaded_analysis")
-        .list_documents()
-    ):
-        file_information_doc.delete()
     db.collection("analysis").document(pytest.a_patient_uid).delete()
 
 
 def test_request_to_get_patients_analysis_returns_a_200_code():
+
     response_from_get_patients_analysis_endpoint = client.get(
         "/analysis", headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"}
     )
@@ -119,6 +128,7 @@ def test_request_to_get_patients_analysis_returns_a_200_code():
 
 
 def test_request_to_get_patients_analysis_returns_a_list():
+
     response_from_get_patients_analysis_endpoint = client.get(
         "/analysis", headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"}
     )
@@ -127,14 +137,18 @@ def test_request_to_get_patients_analysis_returns_a_list():
 
 
 def test_request_to_get_patients_analysis_returns_a_list_of_one_element():
+
     response_from_get_patients_analysis_endpoint = client.get(
         "/analysis", headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"}
     )
+
+    print("DATA", response_from_get_patients_analysis_endpoint.json())
 
     assert len(response_from_get_patients_analysis_endpoint.json()) == 1
 
 
 def test_request_to_get_patients_analysis_returns_a_list_of_one_element():
+
     response_from_get_patients_analysis_endpoint = client.get(
         "/analysis", headers={"Authorization": f"Bearer {pytest.patients_bearer_token}"}
     )
@@ -221,6 +235,7 @@ def test_request_to_get_patients_as_physician_returns_a_403_code_and_detail():
 
 
 def test_request_to_get_patients_analysis_as_physician_returns_a_200_code():
+
     response_from_get_patients_analysis_endpoint = client.get(
         f"/analysis/{pytest.a_patient_uid}",
         headers={"Authorization": f"Bearer {pytest.physicians_bearer_token}"},
@@ -230,6 +245,7 @@ def test_request_to_get_patients_analysis_as_physician_returns_a_200_code():
 
 
 def test_request_to_get_patients_analysis_as_physician_returns_a_list():
+
     response_from_get_patients_analysis_endpoint = client.get(
         f"/analysis/{pytest.a_patient_uid}",
         headers={"Authorization": f"Bearer {pytest.physicians_bearer_token}"},
@@ -239,6 +255,7 @@ def test_request_to_get_patients_analysis_as_physician_returns_a_list():
 
 
 def test_request_to_get_patients_analysis_as_physician_returns_a_list_of_one_element():
+
     response_from_get_patients_analysis_endpoint = client.get(
         f"/analysis/{pytest.a_patient_uid}",
         headers={"Authorization": f"Bearer {pytest.physicians_bearer_token}"},
@@ -248,10 +265,13 @@ def test_request_to_get_patients_analysis_as_physician_returns_a_list_of_one_ele
 
 
 def test_request_to_get_patients_analysis_as_physician_returns_a_list_of_one_element():
+
     response_from_get_patients_analysis_endpoint = client.get(
         f"/analysis/{pytest.a_patient_uid}",
         headers={"Authorization": f"Bearer {pytest.physicians_bearer_token}"},
     )
+
+    print(response_from_get_patients_analysis_endpoint.json())
 
     assert type(response_from_get_patients_analysis_endpoint.json()[0]["id"]) == str
     assert (

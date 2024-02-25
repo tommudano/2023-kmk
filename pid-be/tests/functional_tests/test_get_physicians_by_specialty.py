@@ -4,6 +4,7 @@ from datetime import datetime
 from firebase_admin import firestore, auth
 from app.main import app
 from fastapi.testclient import TestClient
+import requests
 
 client = TestClient(app)
 
@@ -42,6 +43,7 @@ a_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "role": "physician",
 }
 
 another_physician_information = {
@@ -53,6 +55,7 @@ another_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "role": "physician",
 }
 
 other_physician_information = {
@@ -64,6 +67,7 @@ other_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "approved",
     "tuition": "A111",
+    "role": "physician",
 }
 
 pending_to_approve_physician_information = {
@@ -75,6 +79,7 @@ pending_to_approve_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "pending",
     "tuition": "A111",
+    "role": "physician",
 }
 
 denied_approve_physician_information = {
@@ -86,11 +91,25 @@ denied_approve_physician_information = {
     "agenda": {str(number_of_day_of_week): {"start": 8, "finish": 18.5}},
     "approved": "denied",
     "tuition": "A111",
+    "role": "physician",
 }
 
 
 @pytest.fixture(scope="module", autouse=True)
-def load_and_delete_physicians():
+def load_and_delete_specialties():
+    for specialty in specialties:
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def load_and_delete_physicians(load_and_delete_specialties):
     db.collection("physicians").document(a_physician_information["id"]).set(
         a_physician_information
     )
@@ -121,16 +140,6 @@ def create_test_user():
     auth.delete_user(a_KMK_user_information["uid"])
 
 
-@pytest.fixture(scope="module", autouse=True)
-def load_and_delete_specialties():
-    for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
-    yield
-    specilaties_doc = db.collection("specialties").list_documents()
-    for specialty_doc in specilaties_doc:
-        specialty_doc.delete()
-
-
 def test_valid_request_to_get_physicians_endpoint_returns_200_code():
     response_from_login_endpoint = client.post(
         "/users/login",
@@ -139,6 +148,7 @@ def test_valid_request_to_get_physicians_endpoint_returns_200_code():
             "password": a_KMK_user_information["password"],
         },
     )
+
     response_to_get_physicians_endpoint = client.get(
         f"/physicians/specialty/{specialties[0]}",
         headers={
@@ -269,6 +279,7 @@ def test_valid_request_to_get_physicians_endpoint_for_first_specialty_returns_a_
             ]["finish"],
         }
     ]
+    assert first_physician_to_assert["appointment_value"] == 3500
 
     assert second_physician_to_assert["id"] == another_physician_information["id"]
     assert (
@@ -298,6 +309,7 @@ def test_valid_request_to_get_physicians_endpoint_for_first_specialty_returns_a_
             ]["finish"],
         }
     ]
+    assert second_physician_to_assert["appointment_value"] == 3500
 
 
 def test_get_physicians_by_specialty_with_no_authorization_header_returns_401_code():

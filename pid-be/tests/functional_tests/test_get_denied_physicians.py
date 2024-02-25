@@ -79,7 +79,10 @@ initial_admin_information = {
 @pytest.fixture(scope="module", autouse=True)
 def load_and_delete_specialties():
     for specialty in specialties:
-        db.collection("specialties").document().set({"name": specialty})
+        id = db.collection("specialties").document().id
+        db.collection("specialties").document(id).set(
+            {"id": id, "name": specialty, "value": 3500}
+        )
     yield
     specilaties_doc = db.collection("specialties").list_documents()
     for specialty_doc in specilaties_doc:
@@ -122,6 +125,7 @@ def create_validated_physician_and_then_delete_him(create_patient_and_then_delet
             "specialty": a_KMK_physician_information["specialty"],
             "tuition": a_KMK_physician_information["tuition"],
             "approved": "approved",
+            "role": "physician",
         }
     )
     yield
@@ -143,7 +147,7 @@ def create_denied_physician_and_then_delete_him(
         }
     )
     pytest.another_physician_uid = created_user.uid
-    db.collection("physicians").document(pytest.another_physician_uid).set(
+    db.collection("deniedPhysicians").document(pytest.another_physician_uid).set(
         {
             "id": pytest.another_physician_uid,
             "first_name": another_KMK_physician_information["name"],
@@ -153,12 +157,15 @@ def create_denied_physician_and_then_delete_him(
             "specialty": another_KMK_physician_information["specialty"],
             "tuition": another_KMK_physician_information["tuition"],
             "approved": "denied",
+            "role": "physician",
         }
     )
     yield
     try:
         auth.delete_user(pytest.another_physician_uid)
-        db.collection("physicians").document(pytest.another_physician_uid).delete()
+        db.collection("deniedPhysicians").document(
+            pytest.another_physician_uid
+        ).delete()
     except:
         print("[+] Physisican has not been created")
 
@@ -184,6 +191,7 @@ def create_pending_physician_and_then_delete_him(
             "specialty": other_KMK_physician_information["specialty"],
             "tuition": other_KMK_physician_information["tuition"],
             "approved": "pending",
+            "role": "physician",
         }
     )
     yield
@@ -219,56 +227,60 @@ def log_in_initial_admin_user(create_initial_admin_and_then_delete_him):
     yield
 
 
-def test_get_working_physicians_returns_a_200_code():
-    response_to_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+def test_get_denied_physicians_returns_a_200_code():
+    response_to_get_denied_physicians_endpoint = client.get(
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
-    assert response_to_get_working_physicians_endpoint.status_code == 200
+    assert response_to_get_denied_physicians_endpoint.status_code == 200
 
 
-def test_get_working_physicians_returns_a_list():
-    response_to_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+def test_get_denied_physicians_returns_a_list():
+    response_to_get_denied_physicians_endpoint = client.get(
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
     assert (
-        type(response_to_get_working_physicians_endpoint.json()["physicians_working"])
+        type(response_to_get_denied_physicians_endpoint.json()["physicians_blocked"])
         == list
     )
 
 
-def test_get_working_physicians_returns_a_list_of_one_element():
-    response_to_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+def test_get_denied_physicians_returns_a_list_of_one_element():
+    response_to_get_denied_physicians_endpoint = client.get(
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
     assert (
-        len(response_to_get_working_physicians_endpoint.json()["physicians_working"])
+        len(response_to_get_denied_physicians_endpoint.json()["physicians_blocked"])
         == 1
     )
 
 
-def test_get_working_physicians_returns_a_list_of_a_populated_physician():
-    response_to_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+def test_get_denied_physicians_returns_a_list_of_a_populated_physician():
+    response_to_get_denied_physicians_endpoint = client.get(
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
-    physician_to_validate = response_to_get_working_physicians_endpoint.json()[
-        "physicians_working"
+    physician_to_validate = response_to_get_denied_physicians_endpoint.json()[
+        "physicians_blocked"
     ][0]
 
     assert type(physician_to_validate["id"]) == str
-    assert physician_to_validate["first_name"] == a_KMK_physician_information["name"]
     assert (
-        physician_to_validate["last_name"] == a_KMK_physician_information["last_name"]
+        physician_to_validate["first_name"] == another_KMK_physician_information["name"]
     )
     assert (
-        physician_to_validate["specialty"] == a_KMK_physician_information["specialty"]
+        physician_to_validate["last_name"]
+        == another_KMK_physician_information["last_name"]
+    )
+    assert (
+        physician_to_validate["specialty"]
+        == another_KMK_physician_information["specialty"]
     )
     physician_to_validate["agenda"]["working_days"] = set(
         physician_to_validate["agenda"]["working_days"]
@@ -287,11 +299,12 @@ def test_get_working_physicians_returns_a_list_of_a_populated_physician():
         ],
         "appointments": [],
     }
+    assert physician_to_validate["appointment_value"] == 3500
 
 
-def test_get_working_physicians_with_no_authorization_header_returns_401_code():
+def test_get_denied_physicians_with_no_authorization_header_returns_401_code():
     response_from_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+        "/admin/physicians-blocked",
     )
 
     assert response_from_get_working_physicians_endpoint.status_code == 401
@@ -301,9 +314,9 @@ def test_get_working_physicians_with_no_authorization_header_returns_401_code():
     )
 
 
-def test_get_working_physicians_with_empty_authorization_header_returns_401_code():
+def test_get_denied_physicians_with_empty_authorization_header_returns_401_code():
     response_from_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+        "/admin/physicians-blocked",
         headers={"Authorization": ""},
     )
 
@@ -314,9 +327,9 @@ def test_get_working_physicians_with_empty_authorization_header_returns_401_code
     )
 
 
-def test_get_working_physicians_with_empty_bearer_token_returns_401_code():
+def test_get_denied_physicians_with_empty_bearer_token_returns_401_code():
     response_from_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer "},
     )
 
@@ -327,9 +340,9 @@ def test_get_working_physicians_with_empty_bearer_token_returns_401_code():
     )
 
 
-def test_get_working_physicians_with_non_bearer_token_returns_401_code():
+def test_get_denied_physicians_with_non_bearer_token_returns_401_code():
     response_from_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+        "/admin/physicians-blocked",
         headers={"Authorization": pytest.initial_admin_bearer},
     )
 
@@ -340,9 +353,9 @@ def test_get_working_physicians_with_non_bearer_token_returns_401_code():
     )
 
 
-def test_get_working_physicians_with_invalid_bearer_token_returns_401_code():
+def test_get_denied_physicians_with_invalid_bearer_token_returns_401_code():
     response_from_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+        "/admin/physicians-blocked",
         headers={"Authorization": "Bearer smth"},
     )
 
@@ -353,7 +366,7 @@ def test_get_working_physicians_with_invalid_bearer_token_returns_401_code():
     )
 
 
-def test_get_working_physicians_by_non_admin_returns_403_code_and_message():
+def test_get_denied_physicians_by_non_admin_returns_403_code_and_message():
     non_admin_bearer = client.post(
         "/users/login",
         json={
@@ -363,7 +376,7 @@ def test_get_working_physicians_by_non_admin_returns_403_code_and_message():
     ).json()["token"]
 
     response_from_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer {non_admin_bearer}"},
     )
 
@@ -374,15 +387,11 @@ def test_get_working_physicians_by_non_admin_returns_403_code_and_message():
     )
 
 
-def test_get_working_physicians_if_none_exists_returns_an_empty_list():
-    db.collection("physicians").document(pytest.physician_uid).update(
-        {"approved": "pending"}
-    )
-    response_to_get_working_physicians_endpoint = client.get(
-        "/admin/physicians-working",
+def test_get_denied_physicians_if_none_exists_returns_an_empty_list():
+    db.collection("deniedPhysicians").document(pytest.another_physician_uid).delete()
+    response_to_get_denied_physicians_endpoint = client.get(
+        "/admin/physicians-blocked",
         headers={"Authorization": f"Bearer {pytest.initial_admin_bearer}"},
     )
 
-    assert (
-        response_to_get_working_physicians_endpoint.json()["physicians_working"] == []
-    )
+    assert response_to_get_denied_physicians_endpoint.json()["physicians_blocked"] == []

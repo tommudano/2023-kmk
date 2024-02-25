@@ -13,7 +13,7 @@ class UserLoginRequest(BaseModel):
 
 class PatientRegisterRequest(BaseModel):
     role: Literal["patient"] = "patient"
-    name: str = Field(min_length=1)
+    first_name: str = Field(min_length=1)
     last_name: str = Field(min_length=1)
     email: Annotated[str, Query(pattern="^[-\w\.]+@([-\w]+\.)+[-\w]{2,4}$")]
     birth_date: str
@@ -33,7 +33,7 @@ class PatientRegisterRequest(BaseModel):
 
 class PhysicianRegisterRequest(BaseModel):
     role: Literal["physician"] = "physician"
-    name: str = Field(min_length=1)
+    first_name: str = Field(min_length=1)
     last_name: str = Field(min_length=1)
     email: Annotated[str, Query(pattern="^[-\w\.]+@([-\w]+\.)+[-\w]{2,4}$")]
     password: str = Field(

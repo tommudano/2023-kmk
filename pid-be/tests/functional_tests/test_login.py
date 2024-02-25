@@ -16,41 +16,53 @@ a_KMK_user_information = {
 
 a_pending_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": "surgeon",
     "email": "testphysician1@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "pending",
+    "agenda": {"1": {"start": 8, "finish": 18.5}},
 }
 
 
 an_approved_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": "surgeon",
     "email": "testphysician2@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "approved",
+    "agenda": {"start": 8, "finish": 18.5},
 }
 
 a_denied_KMK_physician_information = {
     "role": "physician",
-    "name": "Physician Test User Register 1",
+    "first_name": "Physician Test User Register 1",
     "last_name": "Test Last Name",
     "tuition": "777777",
     "specialty": "surgeon",
     "email": "testphysician3@kmk.com",
-    "password": "verySecurePassword123",
     "approved": "denied",
+    "agenda": {"start": 8, "finish": 18.5},
 }
 
 
 @pytest.fixture(scope="module", autouse=True)
-def create_test_user():
+def load_and_delete_specialties():
+    id = db.collection("specialties").document().id
+    db.collection("specialties").document(id).set(
+        {"id": id, "name": "surgeon", "value": 3500}
+    )
+    yield
+    specilaties_doc = db.collection("specialties").list_documents()
+    for specialty_doc in specilaties_doc:
+        specialty_doc.delete()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def create_test_user(load_and_delete_specialties):
     created_user = auth.create_user(**a_KMK_user_information)
     a_KMK_user_information["uid"] = created_user.uid
     yield
@@ -62,12 +74,12 @@ def create_pending_test_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_pending_KMK_physician_information["email"],
-            "password": a_pending_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.a_pending_phisician_uid = created_user.uid
     db.collection("physicians").document(pytest.a_pending_phisician_uid).set(
-        a_pending_KMK_physician_information
+        {**a_pending_KMK_physician_information, "id": pytest.a_pending_phisician_uid}
     )
     yield
     auth.delete_user(pytest.a_pending_phisician_uid)
@@ -79,12 +91,15 @@ def create_approved_test_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": an_approved_KMK_physician_information["email"],
-            "password": an_approved_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.an_approved_phisician_uid = created_user.uid
     db.collection("physicians").document(pytest.an_approved_phisician_uid).set(
-        an_approved_KMK_physician_information
+        {
+            **an_approved_KMK_physician_information,
+            "id": pytest.an_approved_phisician_uid,
+        }
     )
     yield
     auth.delete_user(pytest.an_approved_phisician_uid)
@@ -96,12 +111,12 @@ def create_denied_test_physician_and_then_delete_him():
     created_user = auth.create_user(
         **{
             "email": a_denied_KMK_physician_information["email"],
-            "password": a_denied_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         }
     )
     pytest.a_denied_phisician_uid = created_user.uid
     db.collection("physicians").document(pytest.a_denied_phisician_uid).set(
-        a_denied_KMK_physician_information
+        {**a_denied_KMK_physician_information, "id": pytest.a_denied_phisician_uid}
     )
     yield
     auth.delete_user(pytest.a_denied_phisician_uid)
@@ -215,7 +230,7 @@ def test_an_approved_phisician_Login_With_Valid_Credentials_Returns_A_200_Code()
         "/users/login",
         json={
             "email": an_approved_KMK_physician_information["email"],
-            "password": an_approved_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     )
 
@@ -227,7 +242,7 @@ def test_a_pending_phisician_Login_With_Valid_Credentials_Returns_A_403_Code_and
         "/users/login",
         json={
             "email": a_pending_KMK_physician_information["email"],
-            "password": a_pending_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     )
 
@@ -243,7 +258,7 @@ def test_a_denied_phisician_Login_With_Valid_Credentials_Returns_A_403_Code_and_
         "/users/login",
         json={
             "email": a_denied_KMK_physician_information["email"],
-            "password": a_denied_KMK_physician_information["password"],
+            "password": "verySecurePassword123",
         },
     )
 

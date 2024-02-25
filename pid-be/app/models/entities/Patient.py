@@ -7,7 +7,7 @@ db = firestore.client()
 
 class Patient:
     role: str
-    name: str
+    first_name: str
     last_name: str
     email: str
     id: str
@@ -15,13 +15,13 @@ class Patient:
     def __init__(
         self,
         role: str,
-        name: str,
+        first_name: str,
         last_name: str,
         email: str,
         id: str,
     ):
         self.role = role
-        self.name = name
+        self.first_name = first_name
         self.last_name = last_name
         self.email = email
         self.id = id
@@ -50,7 +50,7 @@ class Patient:
         db.collection("patients").document(self.id).set(
             {
                 "id": self.id,
-                "first_name": self.name,
+                "first_name": self.first_name,
                 "last_name": self.last_name,
                 "email": self.email,
             }

@@ -1,12 +1,13 @@
 import time
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from firebase_admin import firestore
 from fastapi import HTTPException, status
 
 from .Physician import Physician
 from .Patient import Patient
+from app.helpers.GoogleAPIHandler import GoogleAPIHandler
 
 db = firestore.client()
 
@@ -21,13 +22,21 @@ class Appointment:
     status: str
     attended: bool
     start_time: str
+    appointment_value: int
+    google_meet_conference: bool
+    meet_link: str = None
+    event_id: str = None
 
     def __init__(
         self,
         date: int,
         physician_id: str,
         patient_id: str,
+        appointment_value: int,
         id: str = None,
+        google_meet_conference: bool = False,
+        meet_link: str = None,
+        event_id: str = None,
         created_at: int = None,
         updated_at: int = None,
         status: str = "pending",
@@ -49,6 +58,10 @@ class Appointment:
         self.status = status
         self.attended = attended
         self.start_time = start_time
+        self.appointment_value = appointment_value
+        self.google_meet_conference = google_meet_conference
+        self.meet_link = meet_link
+        self.event_id = event_id
 
     @staticmethod
     def get_all_appointments_for_patient_with(uid):
@@ -242,13 +255,35 @@ class Appointment:
 
         return [appointment.to_dict() for appointment in appointments]
 
+    def get_iso_formatted_time(self):
+        datetime_in_utc = datetime.utcfromtimestamp(self.date).replace(
+            tzinfo=timezone.utc
+        )
+        start_in_gmt_3 = datetime_in_utc.astimezone(timezone(timedelta(hours=-3)))
+        finish_in_gmt_3 = start_in_gmt_3 + timedelta(minutes=30)
+        return {
+            "start": start_in_gmt_3.isoformat(),
+            "finish": finish_in_gmt_3.isoformat(),
+        }
+
+    def add_event_information(self, meet_link, event_id):
+        db.collection("appointments").document(self.id).update(
+            {"meet_link": meet_link, "event_id": event_id}
+        )
+
+    def cancel_calendar_appointment(self):
+        print("HERE")
+        GoogleAPIHandler.delete_event(self.event_id)
+
     def delete(self):
         db.collection("appointments").document(self.id).delete()
         Physician.free_agenda(self.physician_id, self.date)
+        if self.event_id:
+            self.cancel_calendar_appointment()
 
     def update(self, updated_values):
-        if not Physician.has_availability(
-            id=self.physician_id, date=updated_values["date"]
+        if not Physician.get_by_id(self.physician_id).has_availability(
+            updated_values["date"]
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -258,8 +293,12 @@ class Appointment:
         db.collection("appointments").document(self.id).update(
             {**updated_values, "updated_at": round(time.time()), "status": "pending"}
         )
-        self.date = updated_values["date"]
-        Physician.schedule_appointment(id=self.physician_id, date=self.date)
+        Physician.schedule_appointment(
+            id=self.physician_id, date=updated_values["date"]
+        )
+        if self.event_id:
+            self.cancel_calendar_appointment()
+        return Appointment(**{**self.__dict__, "date": updated_values["date"]})
 
     def close(self, updated_values):
         db.collection("appointments").document(self.id).update(
@@ -289,6 +328,8 @@ class Appointment:
                 "patient_id": self.patient_id,
                 "created_at": round(time.time()),
                 "status": self.status,
+                "appointment_value": self.appointment_value,
+                "google_meet_conference": self.google_meet_conference,
             }
         )
         Physician.schedule_appointment(id=self.physician_id, date=self.date)
@@ -305,8 +346,8 @@ class Appointment:
                 "type": "CANCELED_APPOINTMENT_DUE_TO_PHYSICIAN_DENIAL",
                 "data": {
                     "email": patient["email"],
-                    "name": physician["first_name"],
-                    "last_name": physician["last_name"],
+                    "name": physician.first_name,
+                    "last_name": physician.last_name,
                     "day": date.day,
                     "month": date.month,
                     "year": date.year,
